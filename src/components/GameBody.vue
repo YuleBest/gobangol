@@ -11,12 +11,14 @@
       padding: 10px;
     "
   >
+    <!-- 顶部信息显示 -->
     <v-chip-group>
       <v-chip>轮到 {{ isBlackTurn ? "黑棋" : "白棋" }}</v-chip>
       <v-chip>{{ formatTime(timeElapsed) }}</v-chip>
       <v-chip>步数: {{ movesCount }}</v-chip>
     </v-chip-group>
 
+    <!-- 棋盘 -->
     <div style="width: 100%; display: flex; justify-content: center">
       <canvas
         ref="board"
@@ -29,16 +31,19 @@
         "
       ></canvas>
     </div>
+
+    <!-- 操作按钮 -->
     <div
       style="margin: 10px 0; display: flex; justify-content: center; gap: 10px"
     >
-      <v-btn @click="undoMove" :disabled="moveHistory.length === 0 || gameOver">
-        悔棋
-      </v-btn>
+      <v-btn @click="undoMove" :disabled="moveHistory.length === 0 || gameOver"
+        >悔棋</v-btn
+      >
       <v-btn @click="resetGame">重置棋盘</v-btn>
       <v-btn v-if="gameOver" @click="resetGame">再来一次</v-btn>
     </div>
 
+    <!-- 游戏结束弹窗 -->
     <v-dialog v-model="dialogVisible" max-width="300">
       <v-card>
         <v-card-title class="headline">游戏结束</v-card-title>
@@ -52,40 +57,59 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 
-const board = ref(null);
+// --------- 类型定义 ---------
+type Piece = 0 | 1 | 2;
+interface Move {
+  x: number;
+  y: number;
+  piece: Piece;
+}
+interface Point {
+  x: number;
+  y: number;
+}
+
+// --------- 响应式数据 ---------
+const board = ref<HTMLCanvasElement | null>(null);
 const size = 15;
-let ctx = null;
+let ctx: CanvasRenderingContext2D | null = null;
 let cellSize = 0;
-let chessData = [];
+
+let chessData: Piece[][] = [];
 const isBlackTurn = ref(true);
 const gameOver = ref(false);
 const canMove = ref(true);
-const moveHistory = ref([]);
+const moveHistory = ref<Move[]>([]);
 const timeElapsed = ref(0);
-const timer = ref(null);
+const timer = ref<number | null>(null);
 const dialogVisible = ref(false);
 const winnerText = ref("");
 const movesCount = ref(0);
+
+// 预览落子
 const confirmMode = ref(false);
 const previewX = ref(-1);
 const previewY = ref(-1);
-const winLineState = ref(null); // 新增，保存胜利线
 
+// 胜利线
+const winLineState = ref<Point[] | null>(null);
+
+// --------- 生命周期 ---------
 onMounted(() => {
   initData();
   initBoard();
   window.addEventListener("resize", initBoard);
-  // 暂时移除startTimer，等待第一次落子时启动
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", initBoard);
-  clearInterval(timer.value);
+  clearTimer();
 });
 
+// --------- 初始化数据 ---------
 function initData() {
   chessData = Array.from({ length: size }, () => Array(size).fill(0));
   isBlackTurn.value = true;
@@ -97,13 +121,19 @@ function initData() {
   winLineState.value = null;
 }
 
+// --------- 定时器 ---------
 function startTimer() {
-  timer.value = setInterval(() => {
+  timer.value = window.setInterval(() => {
     if (!gameOver.value) timeElapsed.value++;
   }, 1000);
 }
 
-function formatTime(seconds) {
+function clearTimer() {
+  if (timer.value !== null) clearInterval(timer.value);
+}
+
+// --------- 格式化时间 ---------
+function formatTime(seconds: number) {
   const m = String(Math.floor(seconds / 60)).padStart(2, "0");
   const s = String(seconds % 60).padStart(2, "0");
   return `${m}:${s}`;
@@ -111,30 +141,33 @@ function formatTime(seconds) {
 
 // --------- 初始化棋盘 ---------
 function initBoard() {
-  const canvas = board.value;
-  ctx = canvas.getContext("2d");
+  if (!board.value) return;
+  ctx = board.value.getContext("2d");
+  if (!ctx) return;
 
-  const rect = canvas.getBoundingClientRect();
+  const rect = board.value.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-
-  // 使用父容器宽度，但限制最大尺寸
   const canvasSize = Math.min(rect.width, 600);
 
-  canvas.width = canvasSize * dpr;
-  canvas.height = canvasSize * dpr;
+  board.value.width = canvasSize * dpr;
+  board.value.height = canvasSize * dpr;
   ctx.scale(dpr, dpr);
 
-  // 防止 cellSize 太小导致动画负半径
   cellSize = Math.max(canvasSize / size, 10);
 
   drawBoard();
   drawAllPieces();
-  canvas.onclick = handleClick;
+
+  board.value.onclick = handleClick;
 }
 
+// --------- 绘制棋盘 ---------
 function drawBoard() {
+  if (!ctx || !board.value) return;
+
   const canvasWidth = board.value.getBoundingClientRect().width;
 
+  // 背景渐变
   const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasWidth);
   gradient.addColorStop(0, "#f9e4b7");
   gradient.addColorStop(1, "#e5c78a");
@@ -143,6 +176,8 @@ function drawBoard() {
 
   ctx.strokeStyle = "#333";
   ctx.lineWidth = 1;
+
+  // 网格线
   for (let i = 0; i < size; i++) {
     ctx.beginPath();
     ctx.moveTo(cellSize / 2, cellSize / 2 + i * cellSize);
@@ -155,10 +190,16 @@ function drawBoard() {
     ctx.stroke();
   }
 
-  // 绘制星位
-  const starPoints = [];
+  drawStarPoints();
+}
+
+// --------- 星位 ---------
+function drawStarPoints() {
+  if (!ctx) return;
+
+  const points: Point[] = [];
   if (size === 15) {
-    starPoints.push(
+    points.push(
       { x: 3, y: 3 },
       { x: 11, y: 3 },
       { x: 3, y: 11 },
@@ -166,129 +207,122 @@ function drawBoard() {
       { x: 7, y: 7 }
     );
   } else if (size === 19) {
-    starPoints.push(
-      { x: 3, y: 3 },
-      { x: 9, y: 3 },
-      { x: 15, y: 3 },
-      { x: 3, y: 9 },
-      { x: 9, y: 9 },
-      { x: 15, y: 9 },
-      { x: 3, y: 15 },
-      { x: 9, y: 15 },
-      { x: 15, y: 15 }
-    );
+    const positions = [3, 9, 15];
+    for (let x of positions) for (let y of positions) points.push({ x, y });
   }
 
-  starPoints.forEach((point) => {
-    const centerX = cellSize / 2 + point.x * cellSize;
-    const centerY = cellSize / 2 + point.y * cellSize;
-    const starRadius = cellSize * 0.1;
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, starRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = "#333";
-    ctx.fill();
+  points.forEach((p) => {
+    const cx = cellSize / 2 + p.x * cellSize;
+    const cy = cellSize / 2 + p.y * cellSize;
+    const r = cellSize * 0.1;
+    ctx!.beginPath();
+    ctx!.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx!.fillStyle = "#333";
+    ctx!.fill();
   });
 }
 
 // --------- 点击落子 ---------
-function handleClick(e) {
-  if (!canMove.value || gameOver.value) return;
+function handleClick(e: MouseEvent) {
+  if (!canMove.value || gameOver.value || !board.value) return;
 
   const rect = board.value.getBoundingClientRect();
   const x = Math.round((e.clientX - rect.left - cellSize / 2) / cellSize);
   const y = Math.round((e.clientY - rect.top - cellSize / 2) / cellSize);
-
   if (x < 0 || x >= size || y < 0 || y >= size) return;
 
   if (confirmMode.value) {
-    // 第二次点击，确认落子
-    if (x === previewX.value && y === previewY.value) {
-      if (chessData[y][x] !== 0) {
-        // 已有棋子，取消预览
-        confirmMode.value = false;
-        previewX.value = -1;
-        previewY.value = -1;
-        drawAllPieces();
-        return;
-      }
-
-      const piece = isBlackTurn.value ? 1 : 2;
-
-      if (moveHistory.value.length === 0) startTimer();
-      movesCount.value++;
-
-      // 只在动画完成后写入棋盘和切换玩家
-      drawPieceAnimated(x, y, piece);
-
-      // 清空预览，动画中禁止再次点击
-      confirmMode.value = false;
-      previewX.value = -1;
-      previewY.value = -1;
-    } else {
-      // 点击了其他位置，取消预览
-      confirmMode.value = false;
-      previewX.value = -1;
-      previewY.value = -1;
-      drawAllPieces();
-    }
+    confirmMove(x, y);
   } else {
-    // 第一次点击，显示半透明预览
-    if (chessData[y][x] === 0) {
-      confirmMode.value = true;
-      previewX.value = x;
-      previewY.value = y;
-      drawAllPieces();
-      drawPiecePreview(x, y, isBlackTurn.value ? 1 : 2);
-    }
+    previewMove(x, y);
   }
 }
 
-// --------- 绘制棋子动画 ---------
-function drawPieceAnimated(x, y, piece) {
+// --------- 确认落子 ---------
+function confirmMove(x: number, y: number) {
+  if (previewX.value !== x || previewY.value !== y) {
+    confirmMode.value = false;
+    previewX.value = -1;
+    previewY.value = -1;
+    drawAllPieces();
+    return;
+  }
+
+  if (chessData[y][x] !== 0) {
+    confirmMode.value = false;
+    previewX.value = -1;
+    previewY.value = -1;
+    drawAllPieces();
+    return;
+  }
+
+  const piece: Piece = isBlackTurn.value ? 1 : 2;
+  if (moveHistory.value.length === 0) startTimer();
+  movesCount.value++;
+
+  drawPieceAnimated(x, y, piece);
+  confirmMode.value = false;
+  previewX.value = -1;
+  previewY.value = -1;
+}
+
+// --------- 预览落子 ---------
+function previewMove(x: number, y: number) {
+  if (chessData[y][x] === 0) {
+    confirmMode.value = true;
+    previewX.value = x;
+    previewY.value = y;
+    drawAllPieces();
+    drawPiecePreview(x, y, isBlackTurn.value ? 1 : 2);
+  }
+}
+
+// --------- 绘制动画棋子 ---------
+function drawPieceAnimated(x: number, y: number, piece: 1 | 2) {
   const duration = 100;
   const startTime = performance.now();
-  const startRadius = 0;
+  const startRadius = 2; // 避免 r0 = 0
   const endRadius = Math.max(cellSize * 0.4, 2);
 
-  function drawExistingPieces() {
+  const drawExistingPieces = () => {
     drawBoard();
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
-        if (chessData[i][j] !== 0) drawPieceStatic(j, i, chessData[i][j]);
+        if (chessData[i][j] !== 0)
+          drawPieceStatic(j, i, chessData[i][j] as 1 | 2);
       }
     }
 
-    // 绘制胜利线（如果有）
     if (gameOver.value && winLineState.value) {
       drawWinLine(winLineState.value);
     }
-  }
+  };
 
-  function animate(currentTime) {
+  const animate = (currentTime: number) => {
     const elapsedTime = currentTime - startTime;
     const progress = Math.min(elapsedTime / duration, 1);
 
     let currentRadius = startRadius + (endRadius - startRadius) * progress;
-    currentRadius = Math.max(currentRadius, 2);
+    currentRadius = Math.max(currentRadius, 2); // 确保 r0 > 0
 
     drawExistingPieces();
 
     const centerX = cellSize / 2 + x * cellSize;
     const centerY = cellSize / 2 + y * cellSize;
 
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
-    ctx.closePath();
+    ctx!.beginPath();
+    ctx!.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
+    ctx!.closePath();
 
-    const gradient = ctx.createRadialGradient(
+    const gradient = ctx!.createRadialGradient(
       centerX - 2,
       centerY - 2,
-      currentRadius * 0.1,
+      Math.max(currentRadius * 0.1, 1), // 避免 r0 < 0
       centerX,
       centerY,
       currentRadius
     );
+
     if (piece === 1) {
       gradient.addColorStop(0, "#555");
       gradient.addColorStop(1, "#000");
@@ -296,8 +330,9 @@ function drawPieceAnimated(x, y, piece) {
       gradient.addColorStop(0, "#fff");
       gradient.addColorStop(1, "#ddd");
     }
-    ctx.fillStyle = gradient;
-    ctx.fill();
+
+    ctx!.fillStyle = gradient;
+    ctx!.fill();
 
     if (progress < 1) {
       requestAnimationFrame(animate);
@@ -306,27 +341,23 @@ function drawPieceAnimated(x, y, piece) {
       chessData[y][x] = piece;
       moveHistory.value.push({ x, y, piece });
 
-      // 胜利检测
       const winLine = checkWin(x, y);
       if (winLine) {
         gameOver.value = true;
-        clearInterval(timer.value);
-        winLineState.value = winLine; // 保存胜利线状态
+        clearInterval(timer.value!);
+        winLineState.value = winLine;
         winnerText.value = `${piece === 1 ? "黑棋" : "白棋"}胜利！`;
         dialogVisible.value = true;
       }
 
-      // 切换玩家状态
       isBlackTurn.value = !isBlackTurn.value;
-
-      // 清空预览状态
       confirmMode.value = false;
       previewX.value = -1;
       previewY.value = -1;
 
       drawAllPieces();
     }
-  }
+  };
 
   requestAnimationFrame(animate);
 }
@@ -334,63 +365,61 @@ function drawPieceAnimated(x, y, piece) {
 // --------- 绘制所有棋子 ---------
 function drawAllPieces() {
   drawBoard();
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (chessData[y][x] !== 0) drawPieceStatic(x, y, chessData[y][x]);
-    }
-  }
+  drawAllPiecesStatic();
 
-  if (confirmMode.value && previewX.value !== -1 && previewY.value !== -1) {
+  if (confirmMode.value && previewX.value !== -1 && previewY.value !== -1)
     drawPiecePreview(previewX.value, previewY.value, isBlackTurn.value ? 1 : 2);
-  }
 
   if (winLineState.value) drawWinLine(winLineState.value);
 }
 
-// --------- 绘制预览棋子 ---------
-function drawPiecePreview(x, y, piece) {
-  const centerX = cellSize / 2 + x * cellSize;
-  const centerY = cellSize / 2 + y * cellSize;
-  const radius = cellSize * 0.4;
+function drawAllPiecesStatic() {
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++)
+      if (chessData[y][x] !== 0) drawPieceStatic(x, y, chessData[y][x]);
+}
 
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.fillStyle =
-    piece === 1 ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.5)";
-  ctx.fill();
+// --------- 绘制预览棋子 ---------
+function drawPiecePreview(x: number, y: number, piece: Piece) {
+  const cx = cellSize / 2 + x * cellSize;
+  const cy = cellSize / 2 + y * cellSize;
+  ctx!.beginPath();
+  ctx!.arc(cx, cy, cellSize * 0.4, 0, Math.PI * 2);
+  ctx!.fillStyle = piece === 1 ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+  ctx!.fill();
 }
 
 // --------- 绘制静态棋子 ---------
-function drawPieceStatic(x, y, piece) {
-  const centerX = cellSize / 2 + x * cellSize;
-  const centerY = cellSize / 2 + y * cellSize;
+function drawPieceStatic(x: number, y: number, piece: Piece) {
+  const cx = cellSize / 2 + x * cellSize;
+  const cy = cellSize / 2 + y * cellSize;
   const radius = cellSize * 0.4;
 
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.closePath();
-
-  const gradient = ctx.createRadialGradient(
-    centerX - 2,
-    centerY - 2,
+  const grad = ctx!.createRadialGradient(
+    cx - 2,
+    cy - 2,
     radius * 0.1,
-    centerX,
-    centerY,
+    cx,
+    cy,
     radius
   );
   if (piece === 1) {
-    gradient.addColorStop(0, "#555");
-    gradient.addColorStop(1, "#000");
+    grad.addColorStop(0, "#555");
+    grad.addColorStop(1, "#000");
   } else {
-    gradient.addColorStop(0, "#fff");
-    gradient.addColorStop(1, "#ddd");
+    grad.addColorStop(0, "#fff");
+    grad.addColorStop(1, "#ddd");
   }
-  ctx.fillStyle = gradient;
-  ctx.fill();
+
+  ctx!.beginPath();
+  ctx!.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx!.closePath();
+  ctx!.fillStyle = grad;
+  ctx!.fill();
 }
 
 // --------- 胜利检测 ---------
-function checkWin(x, y) {
+function checkWin(x: number, y: number): Point[] | null {
   const color = chessData[y][x];
   if (color === 0) return null;
 
@@ -401,34 +430,30 @@ function checkWin(x, y) {
     { dx: 1, dy: -1 },
   ];
 
-  for (const dir of dirs) {
+  for (const { dx, dy } of dirs) {
+    const winLine: Point[] = [{ x, y }];
     let count = 1;
-    const winLine = [{ x, y }];
 
     // 正方向
-    let i = 1;
-    while (true) {
-      const nx = x + dir.dx * i,
-        ny = y + dir.dy * i;
+    for (let i = 1; ; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
       if (chessData[ny][nx] === color) {
-        count++;
         winLine.push({ x: nx, y: ny });
+        count++;
       } else break;
-      i++;
     }
 
     // 反方向
-    i = 1;
-    while (true) {
-      const nx = x - dir.dx * i,
-        ny = y - dir.dy * i;
+    for (let i = 1; ; i++) {
+      const nx = x - dx * i;
+      const ny = y - dy * i;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
       if (chessData[ny][nx] === color) {
-        count++;
         winLine.unshift({ x: nx, y: ny });
+        count++;
       } else break;
-      i++;
     }
 
     if (count >= 5) return winLine;
@@ -438,38 +463,38 @@ function checkWin(x, y) {
 }
 
 // --------- 绘制胜利线 ---------
-function drawWinLine(winLine) {
-  if (!winLine || winLine.length === 0) return;
+function drawWinLine(winLine: Point[]) {
+  if (!ctx || winLine.length === 0) return;
   ctx.strokeStyle = "green";
   ctx.lineWidth = 5;
   ctx.beginPath();
-  const startX = cellSize / 2 + winLine[0].x * cellSize;
-  const startY = cellSize / 2 + winLine[0].y * cellSize;
-  ctx.moveTo(startX, startY);
-  const endX = cellSize / 2 + winLine[winLine.length - 1].x * cellSize;
-  const endY = cellSize / 2 + winLine[winLine.length - 1].y * cellSize;
-  ctx.lineTo(endX, endY);
+  const start = winLine[0];
+  const end = winLine[winLine.length - 1];
+  ctx.moveTo(
+    cellSize / 2 + start.x * cellSize,
+    cellSize / 2 + start.y * cellSize
+  );
+  ctx.lineTo(cellSize / 2 + end.x * cellSize, cellSize / 2 + end.y * cellSize);
   ctx.stroke();
 }
 
 // --------- 悔棋 ---------
 function undoMove() {
   if (moveHistory.value.length === 0 || gameOver.value) return;
-
-  const lastMove = moveHistory.value.pop();
-  chessData[lastMove.y][lastMove.x] = 0;
+  const last = moveHistory.value.pop()!;
+  chessData[last.y][last.x] = 0;
   isBlackTurn.value = !isBlackTurn.value;
   movesCount.value--;
   confirmMode.value = false;
   previewX.value = -1;
   previewY.value = -1;
-  winLineState.value = null; // 清除胜利线
+  winLineState.value = null;
   drawAllPieces();
 }
 
 // --------- 重置棋盘 ---------
 function resetGame() {
-  clearInterval(timer.value);
+  clearTimer();
   winLineState.value = null;
   initData();
   initBoard();
