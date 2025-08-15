@@ -50,6 +50,7 @@
         <v-card-text>{{ winnerText }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
+          <v-btn @click="dialogVisible = false">关闭</v-btn>
           <v-btn color="primary" @click="resetGame">再来一局</v-btn>
         </v-card-actions>
       </v-card>

@@ -8,7 +8,6 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 10px;
     "
   >
     <!-- 顶部信息显示 -->
@@ -24,7 +23,8 @@
         ref="board"
         style="
           width: 90%;
-          max-width: 400px;
+          min-width: 220px;
+          max-width: 280px;
           height: auto;
           border: 1px solid #333;
           box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
@@ -52,6 +52,7 @@
         <v-card-text>{{ winnerText }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
+          <v-btn @click="dialogVisible = false">关闭</v-btn>
           <v-btn color="primary" @click="resetGame">再来一局</v-btn>
         </v-card-actions>
       </v-card>
@@ -235,7 +236,7 @@ function aiMove() {
       checkGameOver(x, y);
       aiThinking.value = false;
     });
-  }, 300); // 假装思考 0.3s
+  });
 }
 
 // -------- 简单评分算法 --------
@@ -296,7 +297,9 @@ function checkGameOver(x: number, y: number) {
     gameOver.value = true;
     clearTimer();
     winLineState.value = winLine;
-    winnerText.value = `${chessData[y][x] === 1 ? "黑棋" : "白棋"}胜利！`;
+    winnerText.value = `${
+      chessData[y][x] === 1 ? "恭喜你战胜了AI" : "你被AI击败，去多加练习吧~"
+    }`;
     dialogVisible.value = true;
   } else {
     isBlackTurn.value = !isBlackTurn.value;
