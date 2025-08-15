@@ -14,6 +14,7 @@
     <v-chip-group>
       <v-chip>轮到 {{ isBlackTurn ? "黑棋" : "白棋" }}</v-chip>
       <v-chip>{{ formatTime(timeElapsed) }}</v-chip>
+      <v-chip>步数: {{ movesCount }}</v-chip>
     </v-chip-group>
 
     <div style="width: 100%; display: flex; justify-content: center">
@@ -36,6 +37,17 @@
       <v-btn @click="resetGame">重置棋盘</v-btn>
       <v-btn v-if="gameOver" @click="resetGame">再来一次</v-btn>
     </div>
+
+    <v-dialog v-model="dialogVisible" max-width="300">
+      <v-card>
+        <v-card-title class="headline">游戏结束</v-card-title>
+        <v-card-text>{{ winnerText }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="resetGame">再来一局</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -53,6 +65,9 @@ const canMove = ref(true);
 const moveHistory = ref([]);
 const timeElapsed = ref(0);
 const timer = ref(null);
+const dialogVisible = ref(false);
+const winnerText = ref("");
+const movesCount = ref(0);
 
 onMounted(() => {
   initData();
@@ -73,6 +88,7 @@ function initData() {
   canMove.value = true;
   moveHistory.value = [];
   timeElapsed.value = 0;
+  movesCount.value = 0;
 }
 
 function startTimer() {
@@ -175,6 +191,7 @@ function handleClick(e) {
   if (moveHistory.value.length === 0) {
     startTimer();
   }
+  movesCount.value++;
 
   const rect = board.value.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -197,7 +214,7 @@ function drawPieceAnimated(i, j, isBlack) {
   const y = cellSize / 2 + j * cellSize;
   const maxRadius = (cellSize / 2) * 0.8;
   let startTime = null;
-  const duration = 200;
+  const duration = 100;
 
   function animate(time) {
     if (!startTime) startTime = time;
@@ -240,10 +257,14 @@ function drawPieceAnimated(i, j, isBlack) {
         gameOver.value = true;
         clearInterval(timer.value); // 游戏结束时停止计时器
         drawWinLine(winLine);
-        setTimeout(() => alert(`${isBlack ? "黑棋" : "白棋"}胜利！`), 10);
+        winnerText.value = `${isBlack ? "黑棋" : "白棋"}胜利！`;
+        dialogVisible.value = true;
       }
       isBlackTurn.value = !isBlackTurn.value;
       drawPieceStatic(i, j, isBlack, true); // 绘制红色描边
+      if (gameOver.value) {
+        movesCount.value = 0;
+      }
     }
   }
 
@@ -379,5 +400,6 @@ function resetGame() {
   initData();
   drawBoard();
   drawAllPieces();
+  dialogVisible.value = false;
 }
 </script>
