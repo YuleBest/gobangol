@@ -11,6 +11,7 @@ declare module 'vue' {
     Chat: typeof import('./components/Chat.vue')['default']
     Footer: typeof import('./components/Footer.vue')['default']
     GameBody: typeof import('./components/GameBody.vue')['default']
+    GameBodyPVE: typeof import('./components/GameBodyPVE.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     Home: typeof import('./components/Home.vue')['default']
     Navigation: typeof import('./components/Navigation.vue')['default']

@@ -2,7 +2,7 @@
   "name": "gobangol",
   "private": true,
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
