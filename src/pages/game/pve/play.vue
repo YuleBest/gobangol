@@ -1,15 +1,39 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import GameBodyPVE from '@/components/GameBodyPVE.vue'
+
+const route = useRoute()
+
+const displayDiff = computed(() => {
+  const diff = route.query.diff
+  switch (diff) {
+    case 'simple':
+      return '简单'
+    case 'medium':
+      return '中等'
+    case 'hard':
+      return '困难'
+    case 'expert':
+      return '专家'
+    default:
+      return '未知'
+  }
+})
+</script>
+
 <template>
   <div class="all">
     <div class="title">
       <h1>人机对弈</h1>
-      <p>难度：{{ $route.query.diff }}</p>
+      <p>难度：{{ displayDiff }}</p>
     </div>
     <div class="game">
       <GameBodyPVE />
     </div>
     <div class="tips">
       <p>点击两次棋盘上的位置下棋</p>
-      <p>PC端可使用ctrl+鼠标滚轮进行缩放</p>
+      <p>PC 端可使用 Ctrl + 鼠标滚轮进行缩放</p>
       <p>移动端可使用双指放大缩小进行缩放</p>
     </div>
     <div class="diff">
