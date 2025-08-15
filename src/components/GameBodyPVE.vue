@@ -61,8 +61,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, defineProps } from "vue";
 import chessDownSound from "../assets/audio/chess_down.mp3";
+
+// --------- Props ---------
+const props = defineProps({
+  difficulty: {
+    type: String,
+    default: "medium",
+  },
+});
 
 // --------- 类型定义 ---------
 type Piece = 0 | 1 | 2;
@@ -268,23 +276,58 @@ function evaluateMove(x: number, y: number, color: 1 | 2): number {
     { dx: 1, dy: -1 },
   ];
 
+  // 根据难度调整AI行为
+  let depth = 5; // 默认搜索深度
+  let defenseFactor = 0.8; // 防守权重
+
+  switch (props.difficulty) {
+    case "simple":
+      depth = 3;
+      defenseFactor = 0.5;
+      break;
+    case "medium":
+      depth = 5;
+      defenseFactor = 0.8;
+      break;
+    case "hard":
+      depth = 7;
+      defenseFactor = 1.0;
+      break;
+    case "expert":
+      depth = 9;
+      defenseFactor = 1.2;
+      break;
+    case "nightmare":
+      depth = 20;
+      defenseFactor = 1.7;
+      break;
+  }
+
   for (const { dx, dy } of dirs) {
     let count = 0;
-    for (let step = 1; step < 5; step++) {
+    for (let step = 1; step < depth; step++) {
       const nx = x + dx * step;
       const ny = y + dy * step;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
       if (chessData[ny][nx] === color) count++;
       else break;
     }
-    for (let step = 1; step < 5; step++) {
+    for (let step = 1; step < depth; step++) {
       const nx = x - dx * step;
       const ny = y - dy * step;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
       if (chessData[ny][nx] === color) count++;
       else break;
     }
-    score += Math.pow(10, count); // 连 1 得 10，连 2 得 100
+
+    // 根据难度调整得分计算
+    if (color === 2) {
+      // AI棋子
+      score += Math.pow(10, count);
+    } else {
+      // 玩家棋子
+      score += Math.pow(10, count) * defenseFactor;
+    }
   }
 
   return score;

@@ -16,6 +16,8 @@ const displayDiff = computed(() => {
       return '困难'
     case 'expert':
       return '专家'
+    case 'nightmare':
+      return '噩梦模式'
     default:
       return '未知'
   }
@@ -29,7 +31,7 @@ const displayDiff = computed(() => {
       <p>难度：{{ displayDiff }}</p>
     </div>
     <div class="game">
-      <GameBodyPVE />
+      <GameBodyPVE :difficulty="route.query.diff as string" />
     </div>
     <div class="tips">
       <p>点击两次棋盘上的位置下棋</p>
