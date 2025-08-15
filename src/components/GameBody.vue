@@ -131,6 +131,41 @@ function drawBoard() {
     ctx.lineTo(cellSize / 2 + i * cellSize, canvasWidth - cellSize / 2);
     ctx.stroke();
   }
+
+  // 绘制星位
+  const starPoints = [];
+  if (size === 15) {
+    starPoints.push(
+      { x: 3, y: 3 },
+      { x: 11, y: 3 },
+      { x: 3, y: 11 },
+      { x: 11, y: 11 },
+      { x: 7, y: 7 }
+    );
+  } else if (size === 19) {
+    starPoints.push(
+      { x: 3, y: 3 },
+      { x: 9, y: 3 },
+      { x: 15, y: 3 },
+      { x: 3, y: 9 },
+      { x: 9, y: 9 },
+      { x: 15, y: 9 },
+      { x: 3, y: 15 },
+      { x: 9, y: 15 },
+      { x: 15, y: 15 }
+    );
+  }
+
+  starPoints.forEach((point) => {
+    const centerX = cellSize / 2 + point.x * cellSize;
+    const centerY = cellSize / 2 + point.y * cellSize;
+    const starRadius = cellSize * 0.1; // 星位圆点大小
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, starRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = "#333"; // 星位颜色
+    ctx.fill();
+  });
 }
 
 // --------- 点击落子 ---------
