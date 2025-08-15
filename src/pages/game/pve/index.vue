@@ -3,7 +3,7 @@
     <div class="container">
       <v-breadcrumbs :items="items">
         <template v-slot:prepend>
-          <img src="/src/assets/logo.png" alt="logo" />
+          <img src="/icon.png" alt="logo" />
         </template>
       </v-breadcrumbs>
     </div>
