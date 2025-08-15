@@ -15,7 +15,7 @@
     <v-chip-group>
       <v-chip>轮到 {{ isBlackTurn ? "黑棋" : "白棋" }}</v-chip>
       <v-chip>{{ formatTime(timeElapsed) }}</v-chip>
-      <v-chip>步数: {{ movesCount }}</v-chip>
+      <v-chip>第 {{ movesCount }} 手</v-chip>
     </v-chip-group>
 
     <!-- 棋盘 -->

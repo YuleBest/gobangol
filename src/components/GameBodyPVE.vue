@@ -13,9 +13,9 @@
   >
     <!-- 顶部信息显示 -->
     <v-chip-group>
-      <v-chip>轮到 {{ isBlackTurn ? "黑棋" : "白棋" }}</v-chip>
+      <v-chip>轮到 {{ isBlackTurn ? "你 (黑棋)" : "AI (白棋)" }}</v-chip>
       <v-chip>{{ formatTime(timeElapsed) }}</v-chip>
-      <v-chip>步数: {{ movesCount }}</v-chip>
+      <v-chip>第 {{ movesCount }} 手</v-chip>
     </v-chip-group>
 
     <!-- 棋盘 -->
@@ -36,7 +36,9 @@
     <div
       style="margin: 10px 0; display: flex; justify-content: center; gap: 10px"
     >
-      <v-btn @click="undoMove" :disabled="moveHistory.length < 2 || gameOver || aiThinking"
+      <v-btn
+        @click="undoMove"
+        :disabled="moveHistory.length < 2 || gameOver || aiThinking"
         >悔棋</v-btn
       >
       <v-btn @click="resetGame">重置棋盘</v-btn>
@@ -547,7 +549,8 @@ function drawWinLine(winLine: Point[]) {
 
 // -------- 悔棋 --------
 function undoMove() {
-  if (moveHistory.value.length < 2 || gameOver.value || aiThinking.value) return;
+  if (moveHistory.value.length < 2 || gameOver.value || aiThinking.value)
+    return;
 
   // 悔棋两步：玩家和AI的棋子
   for (let i = 0; i < 2; i++) {
