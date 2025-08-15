@@ -291,7 +291,7 @@ function drawPieceAnimated(x, y, piece) {
         gameOver.value = true;
         clearInterval(timer.value);
         drawWinLine(winLine);
-        winnerText.value = `${piece === 1 ? '黑棋' : '白棋'}胜利！`;
+        winnerText.value = `${piece === 1 ? "黑棋" : "白棋"}胜利！`;
         dialogVisible.value = true;
       }
       if (gameOver.value) {
@@ -321,14 +321,13 @@ function drawPiecePreview(x, y, piece) {
   const centerX = cellSize / 2 + x * cellSize;
   const centerY = cellSize / 2 + y * cellSize;
   const radius = cellSize * 0.4;
-  
+
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.fillStyle = piece === 1 ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)';
+  ctx.fillStyle =
+    piece === 1 ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.5)";
   ctx.fill();
 }
-
-
 
 function drawPieceStatic(x, y, piece) {
   const centerX = cellSize / 2 + x * cellSize;
@@ -433,6 +432,5 @@ function resetGame() {
   initBoard();
   dialogVisible.value = false;
   confirmMode.value = false;
-
 }
 </script>
