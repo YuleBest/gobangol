@@ -235,9 +235,11 @@ function drawPieceAnimated(i, j, isBlack) {
     } else {
       chessData[j][i] = isBlack ? 1 : 2;
       moveHistory.value.push({ i, j, isBlack });
-      if (checkWin(i, j)) {
+      const winLine = checkWin(i, j);
+      if (winLine) {
         gameOver.value = true;
         clearInterval(timer.value); // 游戏结束时停止计时器
+        drawWinLine(winLine);
         setTimeout(() => alert(`${isBlack ? "黑棋" : "白棋"}胜利！`), 10);
       }
       isBlackTurn.value = !isBlackTurn.value;
@@ -305,7 +307,7 @@ function drawPieceStatic(i, j, isBlack, isLastMove = false) {
 // --------- 胜利检测 ---------
 function checkWin(x, y) {
   const color = chessData[y][x];
-  if (color === 0) return false;
+  if (color === 0) return null;
   const dirs = [
     { dx: 1, dy: 0 },
     { dx: 0, dy: 1 },
@@ -314,13 +316,16 @@ function checkWin(x, y) {
   ];
   for (const dir of dirs) {
     let count = 1;
+    const winLine = [{ x, y }];
     let i = 1;
     while (true) {
       const nx = x + dir.dx * i,
         ny = y + dir.dy * i;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
-      if (chessData[ny][nx] === color) count++;
-      else break;
+      if (chessData[ny][nx] === color) {
+        count++;
+        winLine.push({ x: nx, y: ny });
+      } else break;
       i++;
     }
     i = 1;
@@ -328,13 +333,29 @@ function checkWin(x, y) {
       const nx = x - dir.dx * i,
         ny = y - dir.dy * i;
       if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
-      if (chessData[ny][nx] === color) count++;
-      else break;
+      if (chessData[ny][nx] === color) {
+        count++;
+        winLine.unshift({ x: nx, y: ny });
+      } else break;
       i++;
     }
-    if (count >= 5) return true;
+    if (count >= 5) return winLine;
   }
-  return false;
+  return null;
+}
+
+// --------- 绘制胜利线 ---------
+function drawWinLine(winLine) {
+  ctx.strokeStyle = "green";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  const startX = cellSize / 2 + winLine[0].x * cellSize;
+  const startY = cellSize / 2 + winLine[0].y * cellSize;
+  ctx.moveTo(startX, startY);
+  const endX = cellSize / 2 + winLine[winLine.length - 1].x * cellSize;
+  const endY = cellSize / 2 + winLine[winLine.length - 1].y * cellSize;
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
 }
 
 // --------- 悔棋 ---------
