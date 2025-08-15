@@ -9,7 +9,7 @@
           <h1>开始游戏</h1>
           <div class="game-menu-item">
             <v-btn prepend-icon="mdi-robot-happy" to="/game/pve" stacked> 人机对弈 </v-btn>
-            <v-btn prepend-icon="mdi-account-multiple" to="/game/pvp" stacked>
+            <v-btn prepend-icon="mdi-account-multiple" to="/game/pvp/play" stacked>
               双人对弈
             </v-btn>
             <v-btn prepend-icon="mdi-web" to="/game/ol" stacked> 联机对弈 </v-btn>

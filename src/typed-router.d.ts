@@ -21,8 +21,9 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/game/ol/': RouteRecordInfo<'/game/ol/', '/game/ol', Record<never, never>, Record<never, never>>,
     '/game/ol/pvp': RouteRecordInfo<'/game/ol/pvp', '/game/ol/pvp', Record<never, never>, Record<never, never>>,
-    '/game/pve': RouteRecordInfo<'/game/pve', '/game/pve', Record<never, never>, Record<never, never>>,
-    '/game/pvp': RouteRecordInfo<'/game/pvp', '/game/pvp', Record<never, never>, Record<never, never>>,
+    '/game/pve/': RouteRecordInfo<'/game/pve/', '/game/pve', Record<never, never>, Record<never, never>>,
+    '/game/pve/play': RouteRecordInfo<'/game/pve/play', '/game/pve/play', Record<never, never>, Record<never, never>>,
+    '/game/pvp/play': RouteRecordInfo<'/game/pvp/play', '/game/pvp/play', Record<never, never>, Record<never, never>>,
     '/setting': RouteRecordInfo<'/setting', '/setting', Record<never, never>, Record<never, never>>,
   }
 }
