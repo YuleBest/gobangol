@@ -1,27 +1,47 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import GameBodyPVE from '@/components/GameBodyPVE.vue'
+import { computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import GameBodyPVE from "@/components/GameBodyPVE.vue";
 
-const route = useRoute()
+const route = useRoute();
+
+const gameId = ref("");
+
+const generateGameId = () => {
+  const diff = route.query.diff as string;
+  const timestamp = Date.now();
+  const combinedString = `${diff}-${timestamp}`;
+  let hash = 0;
+  for (let i = 0; i < combinedString.length; i++) {
+    const char = combinedString.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  const rawHash = Math.abs(hash).toString(36);
+  gameId.value = `${rawHash.slice(0, 14)}|${timestamp}|${diff}`;
+};
+
+onMounted(() => {
+  generateGameId();
+});
 
 const displayDiff = computed(() => {
-  const diff = route.query.diff
+  const diff = route.query.diff;
   switch (diff) {
-    case 'simple':
-      return '简单'
-    case 'medium':
-      return '中等'
-    case 'hard':
-      return '困难'
-    case 'expert':
-      return '专家'
-    case 'nightmare':
-      return '噩梦模式'
+    case "simple":
+      return "简单";
+    case "medium":
+      return "中等";
+    case "hard":
+      return "困难";
+    case "expert":
+      return "专家";
+    case "nightmare":
+      return "噩梦模式";
     default:
-      return '未知'
+      return "未知";
   }
-})
+});
 </script>
 
 <template>
@@ -37,6 +57,9 @@ const displayDiff = computed(() => {
       <p>点击两次棋盘上的位置下棋</p>
       <p>PC 端可使用 Ctrl + 鼠标滚轮进行缩放</p>
       <p>移动端可使用双指放大缩小进行缩放</p>
+      <div class="gameid">
+        <p>对局ID: {{ gameId }}</p>
+      </div>
     </div>
     <div class="diff">
       <div class="btn">
@@ -71,7 +94,12 @@ const displayDiff = computed(() => {
 
 .tips p {
   font-size: 10px;
-  color: #666;
+  color: #999;
+}
+
+.gameid p {
+  font-size: 10px;
+  color: #99999958;
 }
 
 .tips {
