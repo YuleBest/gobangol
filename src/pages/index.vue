@@ -56,7 +56,6 @@
 }
 
 .game-menu-item button {
-  margin: auto;
   margin: 10px;
 }
 
