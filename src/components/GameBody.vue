@@ -241,6 +241,7 @@ function drawPieceAnimated(i, j, isBlack) {
         setTimeout(() => alert(`${isBlack ? "黑棋" : "白棋"}胜利！`), 10);
       }
       isBlackTurn.value = !isBlackTurn.value;
+      drawPieceStatic(i, j, isBlack, true); // 绘制红色描边
     }
   }
 
@@ -251,8 +252,8 @@ function drawPieceAnimated(i, j, isBlack) {
 function drawAllPieces() {
   for (let j = 0; j < size; j++) {
     for (let i = 0; i < size; i++) {
-      if (chessData[j][i] === 1) drawPieceStatic(i, j, true);
-      if (chessData[j][i] === 2) drawPieceStatic(i, j, false);
+      if (chessData[j][i] === 1) drawPieceStatic(i, j, true, false);
+      if (chessData[j][i] === 2) drawPieceStatic(i, j, false, false);
     }
   }
 }
@@ -261,13 +262,13 @@ function drawAllPiecesExcept(skipI, skipJ) {
   for (let j = 0; j < size; j++) {
     for (let i = 0; i < size; i++) {
       if (i === skipI && j === skipJ) continue;
-      if (chessData[j][i] === 1) drawPieceStatic(i, j, true);
-      if (chessData[j][i] === 2) drawPieceStatic(i, j, false);
+      if (chessData[j][i] === 1) drawPieceStatic(i, j, true, false);
+      if (chessData[j][i] === 2) drawPieceStatic(i, j, false, false);
     }
   }
 }
 
-function drawPieceStatic(i, j, isBlack) {
+function drawPieceStatic(i, j, isBlack, isLastMove = false) {
   const x = cellSize / 2 + i * cellSize;
   const y = cellSize / 2 + j * cellSize;
   const radius = (cellSize / 2) * 0.8;
@@ -275,6 +276,12 @@ function drawPieceStatic(i, j, isBlack) {
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, 2 * Math.PI);
   ctx.closePath();
+
+  if (isLastMove) {
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
 
   const gradient = ctx.createRadialGradient(
     x - 2,
