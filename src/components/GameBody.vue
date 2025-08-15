@@ -21,7 +21,7 @@
         ref="board"
         style="
           width: 90%;
-          max-width: 600px;
+          max-width: 400px;
           height: auto;
           border: 1px solid #333;
         "
