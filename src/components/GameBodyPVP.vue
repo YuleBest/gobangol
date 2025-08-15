@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import chessDownSound from "../assets/audio/chess_down.mp3";
 
 // --------- 类型定义 ---------
 type Piece = 0 | 1 | 2;
@@ -340,6 +341,7 @@ function drawPieceAnimated(x: number, y: number, piece: 1 | 2) {
       // 动画完成后写入棋盘数据
       chessData[y][x] = piece;
       moveHistory.value.push({ x, y, piece });
+      new Audio(chessDownSound).play();
 
       const winLine = checkWin(x, y);
       if (winLine) {

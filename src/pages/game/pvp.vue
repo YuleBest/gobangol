@@ -4,7 +4,7 @@
       <div class="title">
         <v-btn to="/"><v-icon>mdi-arrow-left</v-icon>返回首页</v-btn>
       </div>
-      <GameBody />
+      <GameBodyPVP />
     </div>
   </div>
 </template>

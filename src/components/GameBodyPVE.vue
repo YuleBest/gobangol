@@ -36,7 +36,7 @@
     <div
       style="margin: 10px 0; display: flex; justify-content: center; gap: 10px"
     >
-      <v-btn @click="undoMove" :disabled="moveHistory.length === 0 || gameOver"
+      <v-btn @click="undoMove" :disabled="moveHistory.length < 2 || gameOver || aiThinking"
         >悔棋</v-btn
       >
       <v-btn @click="resetGame">重置棋盘</v-btn>
@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import chessDownSound from "../assets/audio/chess_down.mp3";
 
 // --------- 类型定义 ---------
 type Piece = 0 | 1 | 2;
@@ -421,6 +422,7 @@ function drawPieceAnimated(
       chessData[y][x] = piece;
       moveHistory.value.push({ x, y, piece });
       if (callback) callback();
+      new Audio(chessDownSound).play();
     }
   };
 
@@ -545,11 +547,16 @@ function drawWinLine(winLine: Point[]) {
 
 // -------- 悔棋 --------
 function undoMove() {
-  if (moveHistory.value.length === 0 || gameOver.value) return;
-  const last = moveHistory.value.pop()!;
-  chessData[last.y][last.x] = 0;
-  isBlackTurn.value = !isBlackTurn.value;
-  movesCount.value--;
+  if (moveHistory.value.length < 2 || gameOver.value || aiThinking.value) return;
+
+  // 悔棋两步：玩家和AI的棋子
+  for (let i = 0; i < 2; i++) {
+    const last = moveHistory.value.pop()!;
+    chessData[last.y][last.x] = 0;
+  }
+  // 悔棋后，轮到玩家下棋
+  isBlackTurn.value = true;
+  movesCount.value -= 2;
   confirmMode.value = false;
   previewX.value = -1;
   previewY.value = -1;
