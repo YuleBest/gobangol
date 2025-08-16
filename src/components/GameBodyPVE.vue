@@ -45,6 +45,17 @@
       <v-btn v-if="gameOver" @click="resetGame">再来一次</v-btn>
     </div>
 
+    <!-- 显示评分开关 -->
+    <div style="margin-top: 5px">
+      <v-switch
+        v-model="showScores"
+        label="显示评分"
+        color="primary"
+        hide-details
+        inset
+      ></v-switch>
+    </div>
+
     <!-- 游戏结束弹窗 -->
     <v-dialog v-model="dialogVisible" max-width="300">
       <v-card>
@@ -57,11 +68,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 评分解释弹窗 -->
+    <v-dialog v-model="scoreDialogVisible" max-width="400">
+      <v-card>
+        <v-card-title class="headline">评分说明</v-card-title>
+        <v-card-text>
+          <p>
+            评分代表了 AI 对棋盘上每个空位的潜在价值评估，评分越高，AI 对该位置的价值评估就越高。评分预估的准确性会受到你选择的难度的影响，你可以<a href="/game/pve" target="_blank" style="color:pink; text-decoration: none; :visited, :hover, :active, :focus {color:pink;};">点击此处重选难度</a>。
+
+
+          </p>
+          <p>
+          <br></br>评分可以为你提供落子建议，帮助你理解AI的决策过程，并优化你自己的策略。
+          </p>
+          <p>
+            <br></br>当「显示评分」开关开启时，评分会在对弈时显示在棋盘上，其中评分最高的位置将显示为<span style="color: red; display: inline;">红色</span>。
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="scoreDialogVisible = false"
+            >知道了</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, defineProps } from "vue";
+import { ref, onMounted, onBeforeUnmount, defineProps, watch } from "vue";
 import chessDownSound from "../assets/audio/chess_down.mp3";
 
 // --------- Props ---------
@@ -111,12 +148,20 @@ const winLineState = ref<Point[] | null>(null);
 
 // AI 控制
 const aiThinking = ref(false);
+const showScores = ref(false);
+const scoreDialogVisible = ref(false);
 
 // -------- 生命周期 --------
 onMounted(() => {
   initData();
   initBoard();
   window.addEventListener("resize", initBoard);
+
+  watch(showScores, (newValue) => {
+    if (newValue) {
+      scoreDialogVisible.value = true;
+    }
+  });
 });
 
 onBeforeUnmount(() => {
@@ -264,6 +309,52 @@ function findBestMove(): { x: number; y: number } {
   }
 
   return bestMove;
+}
+
+// -------- 绘制评分 --------
+function drawScores() {
+  if (!ctx) return;
+
+  ctx.font = `bold 10px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  let maxScore = -Infinity;
+  const scores: { x: number; y: number; score: number }[] = [];
+
+  // 计算所有空位的评分并找到最高分
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (chessData[y][x] === 0) {
+        const score = evaluateMove(x, y, 2) + evaluateMove(x, y, 1) * 0.8;
+        scores.push({ x, y, score });
+        if (score > maxScore) {
+          maxScore = score;
+        }
+      }
+    }
+  }
+
+  // 绘制评分和背景
+  scores.forEach(({ x, y, score }) => {
+    const cx = cellSize / 2 + x * cellSize;
+    const cy = cellSize / 2 + y * cellSize;
+
+    // 绘制背景
+    ctx!.beginPath();
+    ctx!.arc(cx, cy, 10, 0, Math.PI * 2);
+    if (score === maxScore) {
+      ctx!.fillStyle = "red"; // 最高分位置为红色
+    } else {
+      const alpha = Math.max(0.1, score / maxScore); // 根据评分高低设置透明度
+      ctx!.fillStyle = `rgba(255, 215, 0, ${alpha})`; // 其他位置为黄色，透明度变化
+    }
+    ctx!.fill();
+
+    // 绘制白色文字
+    ctx!.fillStyle = "white";
+    ctx!.fillText(score.toFixed(0), cx, cy);
+  });
 }
 
 // -------- 评分函数 --------
@@ -486,6 +577,10 @@ function drawAllPieces() {
     drawPiecePreview(previewX.value, previewY.value, 1);
 
   if (winLineState.value) drawWinLine(winLineState.value);
+
+  if (showScores.value) {
+    drawScores();
+  }
 }
 
 function drawAllPiecesStatic() {

@@ -113,7 +113,7 @@ const displayDiff = computed(() => {
 .game {
   height: 95%;
   width: 95%;
-  padding: 20px;
+  /* padding: 10px; */
   /* flex: 1; */
 }
 
@@ -121,7 +121,7 @@ const displayDiff = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .title h1 {
