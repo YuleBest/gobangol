@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, defineProps, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import chessDownSound from "../assets/audio/chess_down.mp3";
 
 // --------- Props ---------
@@ -513,12 +513,6 @@ function drawPieceAnimated(
   const startRadius = 2;
   const endRadius = Math.max(cellSize * 0.4, 2);
 
-  const drawExistingPieces = () => {
-    drawBoard();
-    drawAllPiecesStatic();
-    if (winLineState.value) drawWinLine(winLineState.value);
-  };
-
   const animate = (currentTime: number) => {
     const elapsedTime = currentTime - startTime;
     const progress = Math.min(elapsedTime / duration, 1);
@@ -526,7 +520,12 @@ function drawPieceAnimated(
     let currentRadius = startRadius + (endRadius - startRadius) * progress;
     currentRadius = Math.max(currentRadius, 2);
 
-    drawExistingPieces();
+    drawBoard();
+    // 在绘制当前帧之前，先将棋子数据和历史记录更新，确保描边能立即显示
+    chessData[y][x] = piece;
+    moveHistory.value.push({ x, y, piece });
+    drawAllPiecesStatic();
+    if (winLineState.value) drawWinLine(winLineState.value);
 
     const centerX = cellSize / 2 + x * cellSize;
     const centerY = cellSize / 2 + y * cellSize;
@@ -547,7 +546,8 @@ function drawPieceAnimated(
     if (piece === 1) {
       gradient.addColorStop(0, "#555");
       gradient.addColorStop(1, "#000");
-    } else {
+    }
+    else {
       gradient.addColorStop(0, "#fff");
       gradient.addColorStop(1, "#ddd");
     }
@@ -558,8 +558,6 @@ function drawPieceAnimated(
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      chessData[y][x] = piece;
-      moveHistory.value.push({ x, y, piece });
       if (callback) callback();
       new Audio(chessDownSound).play();
     }
@@ -584,9 +582,15 @@ function drawAllPieces() {
 }
 
 function drawAllPiecesStatic() {
-  for (let y = 0; y < size; y++)
-    for (let x = 0; x < size; x++)
-      if (chessData[y][x] !== 0) drawPieceStatic(x, y, chessData[y][x]);
+  const lastMove = moveHistory.value.length > 0 ? moveHistory.value[moveHistory.value.length - 1] : null;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (chessData[y][x] !== 0) {
+        const isLastMove = !!lastMove && lastMove.x === x && lastMove.y === y;
+        drawPieceStatic(x, y, chessData[y][x], isLastMove);
+      }
+    }
+  }
 }
 
 // -------- 绘制预览棋子 --------
@@ -600,7 +604,7 @@ function drawPiecePreview(x: number, y: number, piece: Piece) {
 }
 
 // -------- 绘制静态棋子 --------
-function drawPieceStatic(x: number, y: number, piece: Piece) {
+function drawPieceStatic(x: number, y: number, piece: Piece, isLastMove: boolean = false) {
   const cx = cellSize / 2 + x * cellSize;
   const cy = cellSize / 2 + y * cellSize;
   const radius = cellSize * 0.4;
@@ -626,6 +630,14 @@ function drawPieceStatic(x: number, y: number, piece: Piece) {
   ctx!.closePath();
   ctx!.fillStyle = grad;
   ctx!.fill();
+
+  if (isLastMove) {
+    ctx!.beginPath();
+    ctx!.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+    ctx!.strokeStyle = "red";
+    ctx!.lineWidth = 2;
+    ctx!.stroke();
+  }
 }
 
 // -------- 胜利检测 --------
