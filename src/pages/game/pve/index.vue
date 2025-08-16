@@ -3,7 +3,24 @@
     <div class="container">
       <v-breadcrumbs :items="items">
         <template v-slot:prepend>
-          <img src="/icon.png" alt="logo" />
+          <div class="logo">
+            <a href="/">
+              <!-- 白色 logo，深色模式显示 -->
+              <img
+                v-show="isDarkMode"
+                class="site-logo light"
+                src="/logo_white.png"
+                alt="logo"
+              />
+              <!-- 黑色 logo，浅色模式显示，放大 15% -->
+              <img
+                v-show="!isDarkMode"
+                class="site-logo dark"
+                src="/logo_black.png"
+                alt="logo"
+              />
+            </a>
+          </div>
         </template>
       </v-breadcrumbs>
     </div>
@@ -28,11 +45,50 @@
   <Footer />
 </template>
 
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+import { useTheme } from "vuetify";
+
+const items = [
+  { title: "", disabled: false, href: "/" },
+  { title: "游戏", disabled: false, href: "/" },
+  { title: "人机对弈", disabled: false, href: "/game/pve" },
+];
+
+const diffs = ref("medium");
+
+const theme = useTheme();
+
+// 初始化主题
+onMounted(() => {
+  const saved = localStorage.getItem("themeMode");
+  if (saved === "light" || saved === "dark" || saved === "system") {
+    theme.change(saved);
+  }
+});
+
+// 是否为深色模式
+const isDarkMode = ref(theme.global.current.value.dark);
+
+// 监听 theme 变化
+watch(
+  () => theme.global.current.value,
+  (val) => {
+    isDarkMode.value = val.dark;
+  },
+  { deep: true, immediate: true }
+);
+</script>
+
 <style scoped>
-img {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+.site-logo {
+  height: 10px;
+}
+
+/* 浅色模式 logo 放大 15% */
+.site-logo.dark {
+  transform: scale(1.15);
+  transform-origin: left center;
 }
 
 .container {
@@ -61,27 +117,3 @@ img {
   flex: 1;
 }
 </style>
-
-<script setup>
-const items = [
-  {
-    title: "五子棋在线",
-    disabled: false,
-    href: "/",
-  },
-  {
-    title: "游戏",
-    disabled: false,
-    href: "/",
-  },
-  {
-    title: "人机对弈",
-    disabled: false,
-    href: "/game/pve",
-  },
-];
-
-import { ref } from "vue";
-
-const diffs = ref("medium");
-</script>
