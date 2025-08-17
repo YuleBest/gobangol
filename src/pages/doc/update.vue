@@ -11,7 +11,7 @@
           <v-tabs-window v-model="tab">
             <v-tabs-window-item value="one">
               <h2>版本日志</h2>
-              <pre>（暂无）</pre>
+              <pre>v0.0.5 - 基本框架搭建</pre>
               <h2>提交日志（页面更新可能延迟）</h2>
               <pre>
 YuleBest | 2025-08-17 | style(ui), fix(game/pve): 优化游戏页面布局并优化PVE功能
@@ -74,6 +74,10 @@ const tab = ref("one");
 .tabs h2 {
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+.tabs pre {
+  font-size: 10px;
 }
 
 .log-list {
