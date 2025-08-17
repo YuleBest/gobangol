@@ -8,7 +8,6 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 10px;
     "
   >
     <!-- 顶部信息显示 -->
@@ -24,7 +23,8 @@
         ref="board"
         style="
           width: 90%;
-          max-width: 400px;
+          min-width: 220px;
+          max-width: 280px;
           height: auto;
           border: 1px solid #333;
           box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);

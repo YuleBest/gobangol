@@ -43,18 +43,28 @@
       >
       <v-btn @click="resetGame">重置棋盘</v-btn>
       <v-btn v-if="gameOver" @click="resetGame">再来一次</v-btn>
+      <v-btn @click="moreSettingsDialog = true">更多</v-btn>
     </div>
 
-    <!-- 显示评分开关 -->
-    <div style="margin-top: 5px">
-      <v-switch
-        v-model="showScores"
-        label="显示评分"
-        color="primary"
-        hide-details
-        inset
-      ></v-switch>
-    </div>
+    <!-- 更多设置弹窗 -->
+    <v-dialog v-model="moreSettingsDialog" max-width="300">
+      <v-card>
+        <v-card-title class="headline">更多设置</v-card-title>
+        <v-card-text>
+          <v-switch
+            v-model="showScores"
+            label="显示评分"
+            color="primary"
+            hide-details
+            inset
+          ></v-switch>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="moreSettingsDialog = false">关闭</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- 游戏结束弹窗 -->
     <v-dialog v-model="dialogVisible" max-width="300">
@@ -150,6 +160,7 @@ const winLineState = ref<Point[] | null>(null);
 const aiThinking = ref(false);
 const showScores = ref(false);
 const scoreDialogVisible = ref(false);
+const moreSettingsDialog = ref(false);
 
 // -------- 生命周期 --------
 onMounted(() => {
@@ -253,6 +264,9 @@ function confirmMove(x: number, y: number) {
 
   const piece: Piece = 1; // 玩家永远黑棋
   if (moveHistory.value.length === 0) startTimer();
+
+  chessData[y][x] = piece;
+  moveHistory.value.push({ x, y, piece });
   movesCount.value++;
 
   drawPieceAnimated(x, y, piece, () => {
@@ -284,7 +298,11 @@ function aiMove() {
   aiThinking.value = true;
   setTimeout(() => {
     const { x, y } = findBestMove();
+
+    chessData[y][x] = 2;
+    moveHistory.value.push({ x, y, piece: 2 });
     movesCount.value++;
+
     drawPieceAnimated(x, y, 2, () => {
       checkGameOver(x, y);
       aiThinking.value = false;
@@ -521,9 +539,6 @@ function drawPieceAnimated(
     currentRadius = Math.max(currentRadius, 2);
 
     drawBoard();
-    // 在绘制当前帧之前，先将棋子数据和历史记录更新，确保描边能立即显示
-    chessData[y][x] = piece;
-    moveHistory.value.push({ x, y, piece });
     drawAllPiecesStatic();
     if (winLineState.value) drawWinLine(winLineState.value);
 
@@ -706,18 +721,32 @@ function undoMove() {
     return;
 
   // 悔棋两步：玩家和AI的棋子
-  for (let i = 0; i < 2; i++) {
-    const last = moveHistory.value.pop()!;
-    chessData[last.y][last.x] = 0;
+  if (moveHistory.value.length >= 2) {
+    const aiMove = moveHistory.value.pop()!;
+    const playerMove = moveHistory.value.pop()!;
+
+    chessData[aiMove.y][aiMove.x] = 0;
+    chessData[playerMove.y][playerMove.x] = 0;
+
+    movesCount.value = Math.max(0, movesCount.value - 2);
+    isBlackTurn.value = true; // 悔棋后，轮到玩家下棋
+    confirmMode.value = false;
+    previewX.value = -1;
+    previewY.value = -1;
+    winLineState.value = null;
+    drawAllPieces();
+  } else if (moveHistory.value.length === 1) {
+    // 如果只有一步（玩家的第一步），则只悔一步
+    const playerMove = moveHistory.value.pop()!;
+    chessData[playerMove.y][playerMove.x] = 0;
+    movesCount.value = Math.max(0, movesCount.value - 1);
+    isBlackTurn.value = true;
+    confirmMode.value = false;
+    previewX.value = -1;
+    previewY.value = -1;
+    winLineState.value = null;
+    drawAllPieces();
   }
-  // 悔棋后，轮到玩家下棋
-  isBlackTurn.value = true;
-  movesCount.value -= 2;
-  confirmMode.value = false;
-  previewX.value = -1;
-  previewY.value = -1;
-  winLineState.value = null;
-  drawAllPieces();
 }
 
 // -------- 重置棋盘 --------
