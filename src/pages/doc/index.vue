@@ -17,7 +17,7 @@
 <script setup>
 const items = [
   {
-    title: "GoBang OL 更新日志",
+    title: "更新日志",
     value: 1,
     props: {
       to: "/doc/update",

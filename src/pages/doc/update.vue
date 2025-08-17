@@ -11,9 +11,17 @@
           <v-tabs-window v-model="tab">
             <v-tabs-window-item value="one">
               <h2>版本日志</h2>
-              <pre>v0.0.5 - 基本框架搭建</pre>
+              <pre>
+Version  | Date       | Description
+---------|------------|----------------------------------------------------------
+v0.0.5   | 2025-08-17 | 基本框架搭建
+              </pre>
               <h2>提交日志（页面更新可能延迟）</h2>
               <pre>
+Authon   | Date       | Commit
+---------|------------|----------------------------------------------------------
+Yule     | 2025-08-17 | style(doc): 优化移动端浏览更新日志的体验
+Yule     | 2025-08-17 | style(doc): 缩小更新日志的字号
 YuleBest | 2025-08-17 | style(ui), fix(game/pve): 优化游戏页面布局并优化PVE功能
 YuleBest | 2025-08-16 | feat:(game/pve): 优化棋子绘制逻辑
 YuleBest | 2025-08-16 | feat(game/pve): 添加评分显示功能并调整游戏界面样式
@@ -72,15 +80,14 @@ const tab = ref("one");
 }
 
 .tabs h2 {
-  margin-top: 10px;
   margin-bottom: 10px;
 }
 
 .tabs pre {
-    font-size: 10px;
-    max-width: 80%;       /* 限制宽度，可以改为具体像素值 */
-    overflow-x: auto;     /* 水平滚动 */
-    white-space: pre;     /* 保持原始格式 */
+  font-size: 14px;
+  max-width: 80vw;
+  overflow-x: auto;
+  white-space: pre;
 }
 
 .log-list {
