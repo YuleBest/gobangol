@@ -79,4 +79,10 @@ const rules = [
     return "房间号不存在";
   },
 ];
+
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "联机对弈 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 联机对弈" }],
+});
 </script>

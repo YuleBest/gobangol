@@ -62,9 +62,11 @@ YuleBest | 2025-08-15 | feat(ui): frist commit
 </template>
 
 <script setup>
-import { ref } from "vue";
-
-const tab = ref("one");
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "更新日志 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 更新日志" }],
+});
 </script>
 
 <style scoped>

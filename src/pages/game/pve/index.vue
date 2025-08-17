@@ -78,6 +78,14 @@ watch(
   },
   { deep: true, immediate: true }
 );
+
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "人机对弈 - 选择难度 - GoBang OL",
+  meta: [
+    { name: "description", content: "GoBang OL 人机对弈（PVE）- 选择难度" },
+  ],
+});
 </script>
 
 <style scoped>

@@ -15,6 +15,12 @@
 </template>
 
 <script setup>
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "文档 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 文档" }],
+});
+
 const items = [
   {
     title: "更新日志",

@@ -42,6 +42,12 @@ const displayDiff = computed(() => {
       return "未知";
   }
 });
+
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "人机对弈 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 人机对弈（PVE）" }],
+});
 </script>
 
 <template>

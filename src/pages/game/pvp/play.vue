@@ -23,3 +23,11 @@
 <style scoped>
 @import "@/assets/style/playpages-PVPandPVE.css";
 </style>
+
+<script setup>
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "双人对弈 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 双人对弈（PVP）" }],
+});
+</script>

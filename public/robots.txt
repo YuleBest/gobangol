@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gobang.lh520.pw/sitemap.xml

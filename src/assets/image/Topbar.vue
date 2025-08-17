@@ -7,14 +7,14 @@
           <img
             v-show="isDarkMode"
             class="site-logo light"
-            :src="logoWhite"
+            src="/logo_white.png"
             alt="logo"
           />
           <!-- 黑色 logo，浅色模式显示 -->
           <img
             v-show="!isDarkMode"
             class="site-logo dark"
-            :src="logoBlack"
+            src="/logo_black.png"
             alt="logo"
           />
         </a>
@@ -50,10 +50,6 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { useTheme } from "vuetify";
-
-// **模块导入 logo**
-import logoWhite from "@/assets/image/logo_white.png";
-import logoBlack from "@/assets/image/logo_black.png";
 
 const theme = useTheme();
 

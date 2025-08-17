@@ -51,3 +51,11 @@
   margin-top: 20px;
 }
 </style>
+
+<script setup>
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "设置 - GoBang OL",
+  meta: [{ name: "description", content: "GoBang OL 设置" }],
+});
+</script>

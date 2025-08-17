@@ -5,7 +5,7 @@
     <div class="medal">
       <!-- Vue 勋章 -->
       <a href="https://vuejs.org" title="Vue 勋章" target="_blank">
-        <img src="@/assets/image/Vue.png" style="height: 52px" />
+        <img :src="vueBadge" style="height: 52px" />
       </a>
       <!-- TypeScript 勋章 -->
       <a
@@ -13,7 +13,7 @@
         title="TypeScript 勋章"
         target="_blank"
       >
-        <img src="@/assets/image/TypeScript.png" style="height: 52px" />
+        <img :src="tsBadge" style="height: 52px" />
       </a>
       <!-- GitHub 勋章 -->
       <a
@@ -21,7 +21,7 @@
         title="GitHub 勋章"
         target="_blank"
       >
-        <img src="@/assets/image/GitHub.png" style="height: 52px" />
+        <img :src="githubBadge" style="height: 52px" />
       </a>
       <!-- Trust SSL 安全签章 -->
       <a
@@ -35,7 +35,16 @@
         />
       </a>
     </div>
-    <div>{{ new Date().getFullYear() }} — <strong>于乐Yule</strong></div>
+    <div>
+      Copyright &copy; {{ new Date().getFullYear() }}
+      <strong
+        ><a href="https://github.com/YuleBest" target="_blank"
+          >于乐Yule</a
+        ></strong
+      >
+      All right reserved.
+    </div>
+
     <div class="end">
       <!-- 版权信息© -->
       <div>
@@ -49,7 +58,11 @@
   </v-footer>
 </template>
 
-<script setup></script>
+<script setup lang="ts">
+import vueBadge from "@/assets/image/Vue.png";
+import tsBadge from "@/assets/image/TypeScript.png";
+import githubBadge from "@/assets/image/GitHub.png";
+</script>
 
 <style scoped>
 .medal {
