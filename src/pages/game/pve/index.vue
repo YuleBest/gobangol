@@ -94,7 +94,7 @@ useHead({
 
 <style scoped>
 .site-logo {
-  height: 40px; /* 调整为合理尺寸 */
+  height: 15px;
 }
 
 /* 浅色模式 logo 放大 15% */
