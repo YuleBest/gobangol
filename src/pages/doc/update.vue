@@ -1,3 +1,19 @@
+<template>
+  <Topbar />
+  <div class="main">
+    <div class="tabs">
+      <v-card>
+        <v-tabs v-model="tab" align-tabs="center">
+          <v-tab value="one">更新日志</v-tab>
+        </v-tabs>
+
+        <v-card-text>
+          <v-tabs-window v-model="tab">
+            <v-tabs-window-item value="one">
+              <h2>版本日志</h2>
+              <pre>（暂无）</pre>
+              <h2>提交日志（页面更新可能延迟）</h2>
+              <pre>
 YuleBest | 2025-08-17 | style(ui), fix(game/pve): 优化游戏页面布局并优化PVE功能
 YuleBest | 2025-08-16 | feat:(game/pve): 优化棋子绘制逻辑
 YuleBest | 2025-08-16 | feat(game/pve): 添加评分显示功能并调整游戏界面样式
@@ -27,3 +43,40 @@ YuleBest | 2025-08-15 | chore: 更新版本号至0.0.2并完善README文档
 YuleBest | 2025-08-15 | feat(game): 实现五子棋游戏核心功能与界面
 YuleBest | 2025-08-15 | chore(ui): 删除了一些不打算上线的内容
 YuleBest | 2025-08-15 | feat(ui): frist commit
+              </pre>
+            </v-tabs-window-item>
+          </v-tabs-window>
+        </v-card-text>
+      </v-card>
+    </div>
+  </div>
+  <Footer />
+</template>
+
+<script setup>
+import { ref } from "vue";
+
+const tab = ref("one");
+</script>
+
+<style scoped>
+.main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+}
+
+.tabs {
+  padding: 20px;
+}
+
+.tabs h2 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.log-list {
+  max-width: 50%;
+}
+</style>

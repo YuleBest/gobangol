@@ -22,7 +22,7 @@
       <template v-slot:append>
         <v-btn icon="mdi-home" to="/"></v-btn>
         <v-btn icon="mdi-cog" to="/setting"></v-btn>
-
+        <v-btn icon="mdi-book" to="/doc"></v-btn>
         <!-- 主题切换下拉 -->
         <v-menu>
           <template v-slot:activator="{ props }">
