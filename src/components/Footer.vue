@@ -5,7 +5,7 @@
     <div class="medal">
       <!-- Vue 勋章 -->
       <a href="https://vuejs.org" title="Vue 勋章" target="_blank">
-        <img :src="vueBadge" style="height: 52px" />
+        <img :src="vueBadge" style="height: 40px" />
       </a>
       <!-- TypeScript 勋章 -->
       <a
@@ -13,7 +13,7 @@
         title="TypeScript 勋章"
         target="_blank"
       >
-        <img :src="tsBadge" style="height: 52px" />
+        <img :src="tsBadge" style="height: 40px" />
       </a>
       <!-- GitHub 勋章 -->
       <a
@@ -21,17 +21,18 @@
         title="GitHub 勋章"
         target="_blank"
       >
-        <img :src="githubBadge" style="height: 52px" />
+        <img :src="githubBadge" style="height: 40px" />
       </a>
       <!-- Trust SSL 安全签章 -->
       <a
+        class="trustssl"
         href="https://www.trustssl.cc/trust.php?sn=Z29iYW5nLmxoNTIwLnB3"
         title="Trust SSL安全认证签章"
         target="_blank"
       >
         <img
           src="https://static.coolcdn.cn/images/TrustSSL.png"
-          style="height: 32px"
+          style="height: 25px"
         />
       </a>
     </div>
@@ -79,6 +80,15 @@ import githubBadge from "@/assets/image/GitHub.png";
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.medal *:not(.trustssl) {
+  margin: 0 -2px;
+}
+
+.medal .trustssl {
+  margin: 0 4px;
 }
 
 ::v-deep(a),
