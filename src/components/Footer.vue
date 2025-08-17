@@ -54,6 +54,16 @@
       <div>
         <a href="/about" title="关于本站" target="_self"> 关于本站</a>
       </div>
+      <!-- Urlquery 安全检测报告 -->
+      <div>
+        <a
+          href="https://www.urlquery.net/report/fa232734-b0fd-4b2a-acd7-4a19aad5a18f"
+          title="Urlquery安全检测报告"
+          target="_blank"
+        >
+          Urlquery报告</a
+        >
+      </div>
     </div>
   </v-footer>
 </template>
