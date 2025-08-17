@@ -1,6 +1,9 @@
 <template>
   <v-divider :thickness="2"></v-divider>
-  <v-footer class="text-center d-flex flex-column ga-2 py-4">
+  <v-footer
+    class="text-center d-flex flex-column ga-2 py-4"
+    style="line-height: 0.5"
+  >
     <div>本站已被访问过 <span id="busuanzi_site_pv"></span> 次</div>
     <div class="medal">
       <!-- Vue 勋章 -->
@@ -76,6 +79,10 @@ import githubBadge from "@/assets/image/GitHub.png";
 </script>
 
 <style scoped>
+* {
+  font-size: 12px;
+}
+
 .medal {
   display: flex;
   justify-content: center;
