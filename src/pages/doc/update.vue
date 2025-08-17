@@ -77,7 +77,10 @@ const tab = ref("one");
 }
 
 .tabs pre {
-  font-size: 10px;
+    font-size: 10px;
+    max-width: 80%;       /* 限制宽度，可以改为具体像素值 */
+    overflow-x: auto;     /* 水平滚动 */
+    white-space: pre;     /* 保持原始格式 */
 }
 
 .log-list {
