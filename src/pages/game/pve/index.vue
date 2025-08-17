@@ -9,14 +9,14 @@
               <img
                 v-show="isDarkMode"
                 class="site-logo light"
-                src="/logo_white.png"
+                :src="logoWhite"
                 alt="logo"
               />
               <!-- 黑色 logo，浅色模式显示，放大 15% -->
               <img
                 v-show="!isDarkMode"
                 class="site-logo dark"
-                src="/logo_black.png"
+                :src="logoBlack"
                 alt="logo"
               />
             </a>
@@ -46,8 +46,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useTheme } from "vuetify";
+
+// 图片 import
+import logoWhite from "@/assets/image/logo_white.png";
+import logoBlack from "@/assets/image/logo_black.png";
 
 const items = [
   { title: "", disabled: false, href: "/" },
@@ -90,7 +94,7 @@ useHead({
 
 <style scoped>
 .site-logo {
-  height: 10px;
+  height: 40px; /* 调整为合理尺寸 */
 }
 
 /* 浅色模式 logo 放大 15% */
