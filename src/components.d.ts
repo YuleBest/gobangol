@@ -10,12 +10,9 @@ declare module 'vue' {
   export interface GlobalComponents {
     Chat: typeof import('./components/Chat.vue')['default']
     Footer: typeof import('./components/Footer.vue')['default']
-    GameBody: typeof import('./components/GameBodyPVP.vue')['default']
     GameBodyPVE: typeof import('./components/GameBodyPVE.vue')['default']
     GameBodyPVP: typeof import('./components/GameBodyPVP.vue')['default']
-    HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     Home: typeof import('./components/Home.vue')['default']
-    Navigation: typeof import('./components/Navigation.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Topbar: typeof import('./components/Topbar.vue')['default']
