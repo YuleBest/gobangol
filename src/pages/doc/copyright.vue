@@ -50,10 +50,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
     <div class="reference">
       <h2>参考引用 | Reference</h2>
       <pre>
-- 本站末尾所引用的勋章，包括：
-  - Github、TypeScript、Vue：SAWARATSUKI's license, SAWARATSUKI create a new repository for KawaiiLogos. The full list of logos is available in the repository. The logos not in this repository is temporary following license CC BY 4.0. （Link: https://github.com/SAWARATSUKI/KawaiiLogos），特别感谢 SAWARATSUKI 创作的可爱勋章！
-- 访问量与访问人数统计：不蒜子（https://www.busuanzi.cc/），特别感谢不蒜子提供的免费访问量与访问人数统计！
-
+- 本站所引用的可爱勋章，包括：
+  - 页脚的 Github、TypeScript、Vue，404 页面的 404NotFound：SAWARATSUKI's license, SAWARATSUKI create a new repository for KawaiiLogos. The full list of logos is available in the repository. The logos not in this repository is temporary following license CC BY 4.0. （Link: https://github.com/SAWARATSUKI/KawaiiLogos ），特别感谢 SAWARATSUKI 创作的可爱勋章！
+- 访问量与访问人数统计：不蒜子（ https://www.busuanzi.cc/ ），特别感谢不蒜子提供的免费访问量与访问人数统计！
+- SSL 安全认证签章：TrustSSL（ https://www.trustssl.cc/ ），特别感谢 TrustSSL 提供的 SSL 安全认证签章！
     </pre
       >
     </div>

@@ -5,12 +5,27 @@
  */
 
 // Composables
-import { createRouter, createWebHistory } from "vue-router/auto";
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from "vue-router/auto";
 import { routes } from "vue-router/auto-routes";
+import NotFound from "@/pages/404.vue"; // 引入你的 404 页面
+
+// 给自动生成的 routes 添加 catch-all 404 路由
+const allRoutes: RouteRecordRaw[] = [
+  ...routes,
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound,
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes: allRoutes,
 });
 
 // Workaround for https://github.com/vitejs/vite/issues/11804
