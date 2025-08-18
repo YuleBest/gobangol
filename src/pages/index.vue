@@ -65,7 +65,9 @@
                       >mdi-trophy</v-icon
                     >
                     <v-card-title>双人对弈-高级设置</v-card-title>
-                    <v-card-text> 专业对弈体验，支持禁手规则 </v-card-text>
+                    <v-card-text>
+                      专业对弈体验，支持禁手、Swap2，可禁用悔棋
+                    </v-card-text>
                   </v-card-item>
                 </v-card>
               </v-col>
@@ -85,29 +87,11 @@
           </v-container>
         </div>
 
-        <!-- 游戏提示和介绍 -->
+        <!-- 游戏介绍 -->
         <div class="tips-section">
           <v-container>
             <v-row>
-              <v-col cols="12" md="6">
-                <v-card elevation="2" class="tips-card">
-                  <v-card-title> 游戏小贴士 </v-card-title>
-                  <v-card-text>
-                    <v-card-text> 先手黑棋，后手白棋 </v-card-text>
-                    <v-card-text>
-                      横、竖、斜任意方向连成五子即为胜利
-                    </v-card-text>
-                    <v-card-text>
-                      高级设置支持禁手规则，增加游戏策略性
-                    </v-card-text>
-                    <v-card-text>
-                      合理利用悔棋功能，学习和提高棋艺
-                    </v-card-text>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-
-              <v-col cols="12" md="6">
+              <v-col cols="12" md="12">
                 <v-card elevation="2" class="about-card">
                   <v-card-title> 关于五子棋 </v-card-title>
                   <v-card-text>
@@ -226,7 +210,7 @@
 }
 
 .tips-section {
-  padding: 40px 20px;
+  padding: 0px 20px 20px 20px;
 }
 
 .tips-card,

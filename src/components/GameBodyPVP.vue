@@ -15,6 +15,9 @@
       <v-chip>轮到 {{ isBlackTurn ? "黑棋" : "白棋" }}</v-chip>
       <v-chip>{{ formatTime(timeElapsed) }}</v-chip>
       <v-chip>第 {{ movesCount }} 手</v-chip>
+      <v-chip v-if="props.swap2 && swap2Phase !== 'normal'">
+        {{ getSwap2PhaseText() }}
+      </v-chip>
     </v-chip-group>
 
     <!-- 棋盘 -->
@@ -36,7 +39,7 @@
     <div
       style="margin: 10px 0; display: flex; justify-content: center; gap: 10px"
     >
-      <v-btn @click="undoMove" :disabled="moveHistory.length === 0 || gameOver"
+      <v-btn v-if="props.allowUndo" @click="undoMove" :disabled="moveHistory.length === 0 || gameOver"
         >悔棋</v-btn
       >
       <v-btn @click="resetGame">重置棋盘</v-btn>
@@ -69,6 +72,26 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Swap2选择弹窗 -->
+    <v-dialog v-model="swap2DialogVisible" max-width="400">
+      <v-card>
+        <v-card-title class="headline">{{ swap2DialogTitle }}</v-card-title>
+        <v-card-text style="white-space: pre-line">{{ swap2DialogText }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <template v-if="swap2Phase === 'whiteChoice'">
+            <v-btn @click="handleWhiteChoice('noSwap')">不交换</v-btn>
+            <v-btn @click="handleWhiteChoice('swap')">交换</v-btn>
+            <v-btn @click="handleWhiteChoice('extraTwo')">补两手</v-btn>
+          </template>
+          <template v-else-if="swap2Phase === 'blackFinalChoice'">
+            <v-btn @click="handleBlackFinalChoice('noSwap')">不交换</v-btn>
+            <v-btn @click="handleBlackFinalChoice('swap')">交换</v-btn>
+          </template>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -80,10 +103,15 @@ const props = defineProps({
   doubleThree: { type: Boolean, default: true },
   doubleFour: { type: Boolean, default: true },
   longConnect: { type: Boolean, default: true },
+  swap2: { type: Boolean, default: false },
+  allowUndo: { type: Boolean, default: false },
 });
+
+
 
 // --------- 类型定义 ---------
 type Piece = 0 | 1 | 2;
+type Swap2Phase = 'initial' | 'firstThree' | 'whiteChoice' | 'whiteExtraTwo' | 'blackFinalChoice' | 'normal';
 interface Move {
   x: number;
   y: number;
@@ -112,6 +140,14 @@ const winnerText = ref("");
 const forbiddenDialogVisible = ref(false);
 const forbiddenText = ref("");
 const movesCount = ref(0);
+
+// Swap2 相关状态
+const swap2Phase = ref<Swap2Phase>('normal');
+const swap2DialogVisible = ref(false);
+const swap2DialogTitle = ref("");
+const swap2DialogText = ref("");
+const swap2Choice = ref<'noSwap' | 'swap' | 'extraTwo' | null>(null);
+const swap2ExtraMoves: Move[] = [];
 
 // 预览落子
 const confirmMode = ref(false);
@@ -143,6 +179,15 @@ function initData() {
   timeElapsed.value = 0;
   movesCount.value = 0;
   winLineState.value = null;
+  
+  // 初始化Swap2状态
+  if (props.swap2) {
+    swap2Phase.value = 'firstThree';
+  } else {
+    swap2Phase.value = 'normal';
+  }
+  swap2Choice.value = null;
+  swap2ExtraMoves.length = 0;
 }
 
 // --------- 定时器 ---------
@@ -254,6 +299,12 @@ function handleClick(e: MouseEvent) {
   const x = Math.round((e.clientX - rect.left - cellSize / 2) / cellSize);
   const y = Math.round((e.clientY - rect.top - cellSize / 2) / cellSize);
   if (x < 0 || x >= size || y < 0 || y >= size) return;
+
+  // Swap2特殊处理
+  if (props.swap2 && swap2Phase.value !== 'normal') {
+    handleSwap2Move(x, y);
+    return;
+  }
 
   if (confirmMode.value) {
     confirmMove(x, y);
@@ -722,6 +773,117 @@ function checkLongConnect(x: number, y: number): boolean {
   return false;
 }
 
+// --------- Swap2移动处理 ---------
+function handleSwap2Move(x: number, y: number) {
+  if (chessData[y][x] !== 0) return;
+
+  switch (swap2Phase.value) {
+    case 'firstThree':
+      // 前三手棋阶段：黑-白-黑
+      const piece = movesCount.value === 0 ? 1 : (movesCount.value === 1 ? 2 : 1);
+      placeSwap2Move(x, y, piece);
+      
+      if (movesCount.value === 3) {
+        // 前三手完成，进入白方选择阶段
+        swap2Phase.value = 'whiteChoice';
+        canMove.value = false;
+        showSwap2Dialog('白方选择', '请选择：\n1. 不交换，继续正常对弈\n2. 交换颜色\n3. 再补两手后让黑方选择');
+      }
+      break;
+
+    case 'whiteExtraTwo':
+      // 白方额外两手阶段：白-黑
+      const extraPiece = swap2ExtraMoves.length === 0 ? 2 : 1;
+      placeSwap2Move(x, y, extraPiece);
+      swap2ExtraMoves.push({ x, y, piece: extraPiece });
+
+      if (swap2ExtraMoves.length === 2) {
+        // 额外两手完成，进入黑方最终选择阶段
+        swap2Phase.value = 'blackFinalChoice';
+        showSwap2Dialog('黑方选择', '请选择：\n1. 不交换，继续正常对弈\n2. 交换颜色');
+      }
+      break;
+  }
+}
+
+function placeSwap2Move(x: number, y: number, piece: Piece) {
+  chessData[y][x] = piece;
+  moveHistory.value.push({ x, y, piece });
+  movesCount.value++;
+  new Audio(chessDownSound).play();
+  drawAllPieces();
+}
+
+function showSwap2Dialog(title: string, text: string) {
+  swap2DialogTitle.value = title;
+  swap2DialogText.value = text;
+  swap2DialogVisible.value = true;
+  canMove.value = false;
+}
+
+function handleSwap2Choice(choice: 'noSwap' | 'swap' | 'extraTwo') {
+  swap2Choice.value = choice;
+  swap2DialogVisible.value = false;
+
+  switch (choice) {
+    case 'noSwap':
+      // 不交换，正常进行
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      break;
+
+    case 'swap':
+      // 交换颜色
+      isBlackTurn.value = !isBlackTurn.value;
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      break;
+
+    case 'extraTwo':
+      // 白方再补两手
+      swap2Phase.value = 'whiteExtraTwo';
+      canMove.value = true;
+      break;
+  }
+}
+
+function handleWhiteChoice(choice: 'noSwap' | 'swap' | 'extraTwo') {
+  switch (choice) {
+    case 'noSwap':
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      isBlackTurn.value = true; // 黑方继续
+      break;
+    case 'swap':
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      isBlackTurn.value = false; // 白方变为黑方
+      break;
+    case 'extraTwo':
+      swap2Phase.value = 'whiteExtraTwo';
+      canMove.value = true;
+      isBlackTurn.value = false; // 白方下第4手
+      break;
+  }
+  swap2DialogVisible.value = false;
+}
+
+function handleBlackFinalChoice(choice: 'noSwap' | 'swap') {
+  switch (choice) {
+    case 'noSwap':
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      isBlackTurn.value = true; // 黑方继续
+      break;
+    case 'swap':
+      swap2Phase.value = 'normal';
+      canMove.value = true;
+      isBlackTurn.value = false; // 白方变为黑方
+      break;
+  }
+  swap2DialogVisible.value = false;
+}
+
 // --------- 绘制胜利线 ---------
 function drawWinLine(winLine: Point[]) {
   if (!ctx || winLine.length === 0) return;
@@ -752,6 +914,22 @@ function undoMove() {
   drawAllPieces();
 }
 
+// --------- Swap2阶段文本 ---------
+function getSwap2PhaseText(): string {
+  switch (swap2Phase.value) {
+    case 'firstThree':
+      return `前三手阶段 (${movesCount.value}/3)`;
+    case 'whiteChoice':
+      return '白方选择阶段';
+    case 'whiteExtraTwo':
+      return `白方补子阶段 (${swap2ExtraMoves.length}/2)`;
+    case 'blackFinalChoice':
+      return '黑方最终选择';
+    default:
+      return '';
+  }
+}
+
 // --------- 重置棋盘 ---------
 function resetGame() {
   clearTimer();
@@ -760,6 +938,7 @@ function resetGame() {
   initBoard();
   dialogVisible.value = false;
   forbiddenDialogVisible.value = false;
+  swap2DialogVisible.value = false;
   confirmMode.value = false;
 }
 </script>

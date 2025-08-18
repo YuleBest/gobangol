@@ -53,6 +53,32 @@
             ></v-switch>
           </div>
         </div>
+        <div class="setting-item">
+          <div class="setting-item-title">
+            <h4>交换设置</h4>
+          </div>
+          <div class="setting-item-content">
+            <v-switch
+              label="Swap 2"
+              inset
+              color="blue"
+              v-model="Swap2"
+            ></v-switch>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-item-title">
+            <h4>游戏功能</h4>
+          </div>
+          <div class="setting-item-content">
+            <v-switch
+              label="允许悔棋"
+              inset
+              color="blue"
+              v-model="allowUndo"
+            ></v-switch>
+          </div>
+        </div>
         <!-- 棋局设置 END -->
       </div>
       <a
@@ -92,6 +118,9 @@ const diffs = ref("medium");
 import { useRouter } from "vue-router";
 const router = useRouter();
 
+const Swap2 = ref(false);
+const allowUndo = ref(false);
+
 const startGame = () => {
   router.push({
     path: "/game/pvp/play",
@@ -99,6 +128,8 @@ const startGame = () => {
       doubleThree: doubleThree.value,
       doubleFour: doubleFour.value,
       longConnect: longConnect.value,
+      swap2: Swap2.value,
+      allowUndo: allowUndo.value,
     },
   });
 };
