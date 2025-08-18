@@ -55,7 +55,7 @@
 <script setup>
 import { useHead } from "@vueuse/head";
 useHead({
-  title: "设置 - GoBang OL",
-  meta: [{ name: "description", content: "GoBang OL 设置" }],
+  title: "设置 - Gobang OL",
+  meta: [{ name: "description", content: "Gobang OL 设置" }],
 });
 </script>

@@ -85,7 +85,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 <script setup>
 import { useHead } from "@vueuse/head";
 useHead({
-  title: "版权声明 - GoBang OL",
-  meta: [{ name: "description", content: "GoBang OL 版权声明" }],
+  title: "版权声明 - Gobang OL",
+  meta: [{ name: "description", content: "Gobang OL 版权声明" }],
 });
 </script>

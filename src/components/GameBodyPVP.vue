@@ -55,12 +55,32 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 禁手提示弹窗 -->
+    <v-dialog v-model="forbiddenDialogVisible" max-width="300">
+      <v-card>
+        <v-card-title class="headline">禁手提示</v-card-title>
+        <v-card-text>{{ forbiddenText }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="forbiddenDialogVisible = false"
+            >确定</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import chessDownSound from "../assets/audio/chess_down.mp3";
+
+const props = defineProps({
+  doubleThree: { type: Boolean, default: true },
+  doubleFour: { type: Boolean, default: true },
+  longConnect: { type: Boolean, default: true },
+});
 
 // --------- 类型定义 ---------
 type Piece = 0 | 1 | 2;
@@ -89,6 +109,8 @@ const timeElapsed = ref(0);
 const timer = ref<number | null>(null);
 const dialogVisible = ref(false);
 const winnerText = ref("");
+const forbiddenDialogVisible = ref(false);
+const forbiddenText = ref("");
 const movesCount = ref(0);
 
 // 预览落子
@@ -258,6 +280,17 @@ function confirmMove(x: number, y: number) {
     return;
   }
 
+  // 禁手判断
+  if (isBlackTurn.value && isForbiddenMove(x, y)) {
+    forbiddenText.value = "黑棋禁手！不能落子。";
+    forbiddenDialogVisible.value = true;
+    confirmMode.value = false;
+    previewX.value = -1;
+    previewY.value = -1;
+    drawAllPieces();
+    return;
+  }
+
   const piece: Piece = isBlackTurn.value ? 1 : 2;
   if (moveHistory.value.length === 0) startTimer();
   movesCount.value++;
@@ -377,9 +410,15 @@ function drawAllPieces() {
 }
 
 function drawAllPiecesStatic() {
-  for (let y = 0; y < size; y++)
-    for (let x = 0; x < size; x++)
-      if (chessData[y][x] !== 0) drawPieceStatic(x, y, chessData[y][x]);
+  const lastMove = moveHistory.value.length > 0 ? moveHistory.value[moveHistory.value.length - 1] : null;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (chessData[y][x] !== 0) {
+        const isLastMove = !!lastMove && lastMove.x === x && lastMove.y === y;
+        drawPieceStatic(x, y, chessData[y][x], isLastMove);
+      }
+    }
+  }
 }
 
 // --------- 绘制预览棋子 ---------
@@ -393,7 +432,7 @@ function drawPiecePreview(x: number, y: number, piece: Piece) {
 }
 
 // --------- 绘制静态棋子 ---------
-function drawPieceStatic(x: number, y: number, piece: Piece) {
+function drawPieceStatic(x: number, y: number, piece: Piece, isLastMove: boolean = false) {
   const cx = cellSize / 2 + x * cellSize;
   const cy = cellSize / 2 + y * cellSize;
   const radius = cellSize * 0.4;
@@ -419,6 +458,14 @@ function drawPieceStatic(x: number, y: number, piece: Piece) {
   ctx!.closePath();
   ctx!.fillStyle = grad;
   ctx!.fill();
+
+  if (isLastMove) {
+    ctx!.beginPath();
+    ctx!.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+    ctx!.strokeStyle = "red";
+    ctx!.lineWidth = 2;
+    ctx!.stroke();
+  }
 }
 
 // --------- 胜利检测 ---------
@@ -465,6 +512,216 @@ function checkWin(x: number, y: number): Point[] | null {
   return null;
 }
 
+// --------- 禁手判断 ---------
+function isForbiddenMove(x: number, y: number): boolean {
+  // 只有黑棋有禁手
+  if (!isBlackTurn.value) return false;
+
+  // 模拟落子
+  chessData[y][x] = 1; // 假设是黑棋
+
+  let forbidden = false;
+
+  // 三三禁手
+  if (props.doubleThree && checkDoubleThree(x, y)) {
+    forbidden = true;
+  }
+
+  // 四四禁手
+  if (!forbidden && props.doubleFour && checkDoubleFour(x, y)) {
+    forbidden = true;
+  }
+
+  // 长连禁手
+  if (!forbidden && props.longConnect && checkLongConnect(x, y)) {
+    forbidden = true;
+  }
+
+  // 撤销模拟落子
+  chessData[y][x] = 0;
+
+  return forbidden;
+}
+
+// 检查三三禁手
+function checkDoubleThree(x: number, y: number): boolean {
+  let count = 0;
+  const dirs = [
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+  ];
+
+  for (const { dx, dy } of dirs) {
+    const liveThreeCount = countLiveThrees(x, y, dx, dy);
+    if (liveThreeCount >= 2) {
+      count++;
+    }
+  }
+  return count >= 2;
+}
+
+// 检查活三
+function countLiveThrees(x: number, y: number, dx: number, dy: number): number {
+  let liveThreeCount = 0;
+
+  // 方向一
+  const line1 = getLine(x, y, dx, dy);
+  if (isLiveThree(line1)) liveThreeCount++;
+
+  // 方向二
+  const line2 = getLine(x, y, -dx, -dy);
+  if (isLiveThree(line2)) liveThreeCount++;
+
+  return liveThreeCount;
+}
+
+// 获取指定方向的棋子序列
+function getLine(x: number, y: number, dx: number, dy: number): Piece[] {
+  const line: Piece[] = [];
+  for (let i = -4; i <= 4; i++) {
+    const nx = x + dx * i;
+    const ny = y + dy * i;
+    if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+      line.push(chessData[ny][nx]);
+    } else {
+      line.push(-1 as Piece); // 边界外视为-1
+    }
+  }
+  return line;
+}
+
+// 判断是否为活三
+function isLiveThree(line: Piece[]): boolean {
+  // 活三的模式，例如：01110 (0代表空，1代表黑棋)
+  // 简化判断，实际需要更复杂的模式匹配
+  const patterns = [
+    [0, 1, 1, 1, 0], // 眠三
+    [0, 1, 0, 1, 1, 0], // 跳三
+    [0, 1, 1, 0, 1, 0], // 跳三
+  ];
+
+  for (const pattern of patterns) {
+    for (let i = 0; i <= line.length - pattern.length; i++) {
+      let match = true;
+      for (let j = 0; j < pattern.length; j++) {
+        if (pattern[j] === 0 && line[i + j] !== 0) {
+          match = false;
+          break;
+        }
+        if (pattern[j] === 1 && line[i + j] !== 1) {
+          match = false;
+          break;
+        }
+      }
+      if (match) return true;
+    }
+  }
+  return false;
+}
+
+// 检查四四禁手
+function checkDoubleFour(x: number, y: number): boolean {
+  let count = 0;
+  const dirs = [
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+  ];
+
+  for (const { dx, dy } of dirs) {
+    const liveFourCount = countLiveFours(x, y, dx, dy);
+    if (liveFourCount >= 2) {
+      count++;
+    }
+  }
+  return count >= 2;
+}
+
+// 检查活四
+function countLiveFours(x: number, y: number, dx: number, dy: number): number {
+  let liveFourCount = 0;
+
+  // 方向一
+  const line1 = getLine(x, y, dx, dy);
+  if (isLiveFour(line1)) liveFourCount++;
+
+  // 方向二
+  const line2 = getLine(x, y, -dx, -dy);
+  if (isLiveFour(line2)) liveFourCount++;
+
+  return liveFourCount;
+}
+
+// 判断是否为活四
+function isLiveFour(line: Piece[]): boolean {
+  // 活四的模式，例如：011110
+  const patterns = [
+    [0, 1, 1, 1, 1, 0], // 活四
+    [1, 0, 1, 1, 1, 0], // 跳活四
+    [0, 1, 0, 1, 1, 1, 0], // 跳活四
+    [0, 1, 1, 0, 1, 1, 0], // 跳活四
+    [0, 1, 1, 1, 0, 1, 0], // 跳活四
+  ];
+
+  for (const pattern of patterns) {
+    for (let i = 0; i <= line.length - pattern.length; i++) {
+      let match = true;
+      for (let j = 0; j < pattern.length; j++) {
+        if (pattern[j] === 0 && line[i + j] !== 0) {
+          match = false;
+          break;
+        }
+        if (pattern[j] === 1 && line[i + j] !== 1) {
+          match = false;
+          break;
+        }
+      }
+      if (match) return true;
+    }
+  }
+  return false;
+}
+
+// 检查长连禁手
+function checkLongConnect(x: number, y: number): boolean {
+  const color = 1; // 黑棋
+  const dirs = [
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+  ];
+
+  for (const { dx, dy } of dirs) {
+    let count = 1;
+    // 正方向
+    for (let i = 1; ; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
+      if (chessData[ny][nx] === color) {
+        count++;
+      } else break;
+    }
+
+    // 反方向
+    for (let i = 1; ; i++) {
+      const nx = x - dx * i;
+      const ny = y - dy * i;
+      if (nx < 0 || nx >= size || ny < 0 || ny >= size) break;
+      if (chessData[ny][nx] === color) {
+        count++;
+      } else break;
+    }
+
+    if (count > 5) return true;
+  }
+  return false;
+}
+
 // --------- 绘制胜利线 ---------
 function drawWinLine(winLine: Point[]) {
   if (!ctx || winLine.length === 0) return;
@@ -502,6 +759,7 @@ function resetGame() {
   initData();
   initBoard();
   dialogVisible.value = false;
+  forbiddenDialogVisible.value = false;
   confirmMode.value = false;
 }
 </script>

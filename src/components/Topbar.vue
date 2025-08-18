@@ -1,6 +1,6 @@
 <template>
   <div class="topbar">
-    <v-app-bar :elevation="0" height="60">
+    <v-app-bar :elevation="0" color="transparent" height="60">
       <div class="logo">
         <a href="/">
           <!-- 白色 logo，深色模式显示 -->
@@ -46,6 +46,26 @@
     </v-app-bar>
   </div>
 </template>
+
+<style scoped>
+.v-toolbar {
+  position: relative; /* 为伪元素定位 */
+  z-index: 1; /* 确保文字在上层 */
+}
+
+.v-toolbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent; /* 不改变颜色 */
+  backdrop-filter: blur(50px); /* 模糊背景 */
+  -webkit-backdrop-filter: blur(50px); /* Safari 支持 */
+  z-index: -1; /* 放在文字下面 */
+}
+</style>
 
 <script setup>
 import { onMounted, ref, watch } from "vue";

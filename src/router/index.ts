@@ -24,8 +24,12 @@ const allRoutes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: allRoutes,
+  history: createWebHistory(),
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 始终滚动到顶部
+    return { top: 0 };
+  },
 });
 
 // Workaround for https://github.com/vitejs/vite/issues/11804

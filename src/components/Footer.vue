@@ -54,10 +54,10 @@
       <div>
         <a href="/doc/copyright" title="版权信息©" target="_self"> 版权信息</a>
       </div>
-      <!-- 关于本站（about页面待开发） -->
+      <!-- 关于本站（about页面待开发）
       <div>
         <a href="/about" title="关于本站" target="_self"> 关于本站</a>
-      </div>
+      </div> -->
       <!-- Urlquery 安全检测报告 -->
       <div>
         <a

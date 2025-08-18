@@ -45,8 +45,8 @@ const displayDiff = computed(() => {
 
 import { useHead } from "@vueuse/head";
 useHead({
-  title: "人机对弈 - GoBang OL",
-  meta: [{ name: "description", content: "GoBang OL 人机对弈（PVE）" }],
+  title: "人机对弈 - Gobang OL",
+  meta: [{ name: "description", content: "Gobang OL 人机对弈（PVE）" }],
 });
 </script>
 
@@ -81,4 +81,7 @@ useHead({
 
 <style scoped>
 @import "@/assets/style/playpages-PVPandPVE.css";
+.game {
+  margin: -40px 0;
+}
 </style>

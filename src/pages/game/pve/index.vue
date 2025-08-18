@@ -12,7 +12,7 @@
                 :src="logoWhite"
                 alt="logo"
               />
-              <!-- 黑色 logo，浅色模式显示，放大 15% -->
+              <!-- 黑色 logo，浅色模式显示 -->
               <img
                 v-show="!isDarkMode"
                 class="site-logo dark"
@@ -85,9 +85,9 @@ watch(
 
 import { useHead } from "@vueuse/head";
 useHead({
-  title: "人机对弈 - 选择难度 - GoBang OL",
+  title: "人机对弈 - 选择难度 - Gobang OL",
   meta: [
-    { name: "description", content: "GoBang OL 人机对弈（PVE）- 选择难度" },
+    { name: "description", content: "Gobang OL 人机对弈（PVE）- 选择难度" },
   ],
 });
 </script>
@@ -97,11 +97,11 @@ useHead({
   height: 15px;
 }
 
-/* 浅色模式 logo 放大 15% */
+/* 浅色模式 logo 放大 15%
 .site-logo.dark {
   transform: scale(1.15);
   transform-origin: left center;
-}
+} */
 
 .container {
   height: 100px;

@@ -3,7 +3,7 @@
   <div class="main">
     <div class="title">
       <h1>文档</h1>
-      <p>这里包含了 GoBang OL 的相关文档</p>
+      <p>这里包含了 Gobang OL 的相关文档</p>
     </div>
     <v-divider :thickness="2"></v-divider>
     <div class="doc-list">
@@ -17,8 +17,8 @@
 <script setup>
 import { useHead } from "@vueuse/head";
 useHead({
-  title: "文档 - GoBang OL",
-  meta: [{ name: "description", content: "GoBang OL 文档" }],
+  title: "文档 - Gobang OL",
+  meta: [{ name: "description", content: "Gobang OL 文档" }],
 });
 
 const items = [
@@ -27,6 +27,13 @@ const items = [
     value: 1,
     props: {
       to: "/doc/update",
+    },
+  },
+  {
+    title: "版权信息",
+    value: 2,
+    props: {
+      to: "/doc/copyright",
     },
   },
 ];

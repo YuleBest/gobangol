@@ -2,7 +2,7 @@
   "name": "gobangol",
   "private": true,
   "type": "module",
-  "version": "v0.0.4",
+  "version": "v0.1.0",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" -- && node update_sitemap.xml.js",
