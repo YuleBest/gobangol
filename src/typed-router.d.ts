@@ -20,17 +20,16 @@ declare module 'vue-router/auto-routes' {
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/404': RouteRecordInfo<'/404', '/404', Record<never, never>, Record<never, never>>,
-    '/admin-deving/': RouteRecordInfo<'/admin-deving/', '/admin-deving', Record<never, never>, Record<never, never>>,
+    '/admin': RouteRecordInfo<'/admin', '/admin', Record<never, never>, Record<never, never>>,
     '/doc/': RouteRecordInfo<'/doc/', '/doc', Record<never, never>, Record<never, never>>,
     '/doc/copyright': RouteRecordInfo<'/doc/copyright', '/doc/copyright', Record<never, never>, Record<never, never>>,
     '/doc/update': RouteRecordInfo<'/doc/update', '/doc/update', Record<never, never>, Record<never, never>>,
     '/game/ol/': RouteRecordInfo<'/game/ol/', '/game/ol', Record<never, never>, Record<never, never>>,
-    '/game/ol/pvp': RouteRecordInfo<'/game/ol/pvp', '/game/ol/pvp', Record<never, never>, Record<never, never>>,
+    '/game/ol/play': RouteRecordInfo<'/game/ol/play', '/game/ol/play', Record<never, never>, Record<never, never>>,
     '/game/pve/': RouteRecordInfo<'/game/pve/', '/game/pve', Record<never, never>, Record<never, never>>,
     '/game/pve/play': RouteRecordInfo<'/game/pve/play', '/game/pve/play', Record<never, never>, Record<never, never>>,
     '/game/pvp/': RouteRecordInfo<'/game/pvp/', '/game/pvp', Record<never, never>, Record<never, never>>,
     '/game/pvp/play': RouteRecordInfo<'/game/pvp/play', '/game/pvp/play', Record<never, never>, Record<never, never>>,
-    '/room-deving/': RouteRecordInfo<'/room-deving/', '/room-deving', Record<never, never>, Record<never, never>>,
     '/setting': RouteRecordInfo<'/setting', '/setting', Record<never, never>, Record<never, never>>,
   }
 }
