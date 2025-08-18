@@ -161,7 +161,6 @@ const aiThinking = ref(false);
 const showScores = ref(false);
 const scoreDialogVisible = ref(false);
 const moreSettingsDialog = ref(false);
-const aiPreCalculatedMove = ref<{ x: number; y: number } | null>(null);
 
 // -------- 生命周期 --------
 onMounted(() => {
@@ -266,12 +265,21 @@ function confirmMove(x: number, y: number) {
   const piece: Piece = 1; // 玩家永远黑棋
   if (moveHistory.value.length === 0) startTimer();
 
-  // 立即启动AI计算，但延迟执行
-  if (!gameOver.value) {
-    calculateAIMoveAsync();
-  }
+  chessData[y][x] = piece;
+  moveHistory.value.push({ x, y, piece });
+  movesCount.value++;
 
-  drawPieceAnimated(x, y, piece);
+  drawPieceAnimated(x, y, piece, () => {
+    checkGameOver(x, y);
+    if (!gameOver.value) {
+      // AI 回合
+      aiMove();
+    }
+  });
+
+  confirmMode.value = false;
+  previewX.value = -1;
+  previewY.value = -1;
 }
 
 // -------- 预览落子 --------
@@ -285,33 +293,21 @@ function previewMove(x: number, y: number) {
   }
 }
 
-// -------- 异步AI计算 --------
-function calculateAIMoveAsync() {
-  aiThinking.value = true;
-  // 使用setTimeout让计算在下一帧开始，避免阻塞UI
-  setTimeout(() => {
-    const move = findBestMove();
-    aiPreCalculatedMove.value = move;
-    aiThinking.value = false;
-  }, 50);
-}
-
 // -------- AI 落子 --------
 function aiMove() {
   aiThinking.value = true;
-  
-  // 如果有预计算结果，直接使用
-  if (aiPreCalculatedMove.value) {
-    const { x, y } = aiPreCalculatedMove.value;
-    aiPreCalculatedMove.value = null;
-    drawPieceAnimated(x, y, 2);
-  } else {
-    // 如果没有预计算结果，立即计算
-    setTimeout(() => {
-      const { x, y } = findBestMove();
-      drawPieceAnimated(x, y, 2);
+  setTimeout(() => {
+    const { x, y } = findBestMove();
+
+    chessData[y][x] = 2;
+    moveHistory.value.push({ x, y, piece: 2 });
+    movesCount.value++;
+
+    drawPieceAnimated(x, y, 2, () => {
+      checkGameOver(x, y);
+      aiThinking.value = false;
     });
-  }
+  });
 }
 
 // -------- 简单评分算法 --------
@@ -457,6 +453,8 @@ function checkGameOver(x: number, y: number) {
       chessData[y][x] === 1 ? "恭喜你战胜了AI" : "你被AI击败，去多加练习吧~"
     }`;
     dialogVisible.value = true;
+  } else {
+    isBlackTurn.value = !isBlackTurn.value;
   }
 }
 
@@ -522,8 +520,13 @@ function drawStarPoints() {
 }
 
 // -------- 绘制动画棋子 --------
-function drawPieceAnimated(x: number, y: number, piece: 1 | 2) {
-  const duration = 300; // 增加动画持续时间使其更明显
+function drawPieceAnimated(
+  x: number,
+  y: number,
+  piece: 1 | 2,
+  callback?: () => void
+) {
+  const duration = 100;
   const startTime = performance.now();
   const startRadius = 2;
   const endRadius = Math.max(cellSize * 0.4, 2);
@@ -531,10 +534,8 @@ function drawPieceAnimated(x: number, y: number, piece: 1 | 2) {
   const animate = (currentTime: number) => {
     const elapsedTime = currentTime - startTime;
     const progress = Math.min(elapsedTime / duration, 1);
-    
-    // 使用缓动函数使动画更平滑
-    const easeProgress = 1 - Math.pow(1 - progress, 3);
-    let currentRadius = startRadius + (endRadius - startRadius) * easeProgress;
+
+    let currentRadius = startRadius + (endRadius - startRadius) * progress;
     currentRadius = Math.max(currentRadius, 2);
 
     drawBoard();
@@ -572,49 +573,8 @@ function drawPieceAnimated(x: number, y: number, piece: 1 | 2) {
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      // 动画完成后写入棋盘数据
-      chessData[y][x] = piece;
-      moveHistory.value.push({ x, y, piece });
-      movesCount.value++;
-      
-      // 播放落子音效
+      if (callback) callback();
       new Audio(chessDownSound).play();
-
-      // 检查游戏结束
-      const winLine = checkWin(x, y);
-      if (winLine) {
-        gameOver.value = true;
-        clearTimer();
-        winLineState.value = winLine;
-        winnerText.value = `${piece === 1 ? "恭喜你战胜了AI" : "你被AI击败，去多加练习吧~"}`;
-        dialogVisible.value = true;
-      } else {
-        // 如果是玩家落子且游戏未结束，轮到AI
-        if (piece === 1 && !gameOver.value) {
-          // 如果已经有预计算结果，立即使用；否则等待计算完成
-          if (aiPreCalculatedMove.value) {
-            aiMove();
-          } else {
-            // 等待预计算完成
-            const checkPreCalc = setInterval(() => {
-              if (aiPreCalculatedMove.value || !aiThinking.value) {
-                clearInterval(checkPreCalc);
-                aiMove();
-              }
-            }, 100);
-          }
-        } else if (piece === 2) {
-          // AI落子完成后
-          aiThinking.value = false;
-        }
-      }
-
-      isBlackTurn.value = !isBlackTurn.value;
-      confirmMode.value = false;
-      previewX.value = -1;
-      previewY.value = -1;
-
-      drawAllPieces();
     }
   };
 
@@ -793,7 +753,6 @@ function undoMove() {
 function resetGame() {
   clearTimer();
   winLineState.value = null;
-  aiPreCalculatedMove.value = null;
   initData();
   initBoard();
   dialogVisible.value = false;

@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    '(1)': typeof import('./components/GameBodyPVE (1).vue')['default']
     Chat: typeof import('./components/Chat.vue')['default']
     Footer: typeof import('./components/Footer.vue')['default']
     GameBodyPVE: typeof import('./components/GameBodyPVE.vue')['default']
