@@ -13,6 +13,11 @@
 
 <script>
 import mdDoc from "@/assets/doc/update.md";
+import { useHead } from "@vueuse/head";
+useHead({
+  title: "更新日志 - Gobang OL 文档",
+  meta: [{ name: "description", content: "Gobang OL 更新日志" }],
+});
 
 export default {
   components: {

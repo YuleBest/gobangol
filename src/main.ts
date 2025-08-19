@@ -10,6 +10,7 @@ import { registerPlugins } from "@/plugins";
 import App from "./App.vue";
 import { createApp } from "vue";
 import { createHead } from "@vueuse/head";
+import { useHead } from "@vueuse/head";
 const head = createHead();
 
 // Styles
