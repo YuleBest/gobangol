@@ -4,16 +4,11 @@
  * Bootstraps Vuetify and other plugins then mounts the App`
  */
 
-// Plugins
+// Note: DONT USE '@', use './' instead, and base url is '/src'
+
 import { registerPlugins } from "@/plugins";
-
-// Components
 import App from "./App.vue";
-
-// Composables
 import { createApp } from "vue";
-
-// Pages Head
 import { createHead } from "@vueuse/head";
 const head = createHead();
 
@@ -21,9 +16,7 @@ const head = createHead();
 import "./assets/main.css";
 
 const app = createApp(App);
-
 registerPlugins(app);
-
 app.mount("#app");
 app.use(head);
 

@@ -8,6 +8,7 @@
 import "@mdi/font/css/materialdesignicons.css";
 import "vuetify/styles";
 import { VStepperVertical } from "vuetify/labs/VStepperVertical";
+import { md3 } from "vuetify/blueprints";
 
 // Composables
 import { createVuetify } from "vuetify";
@@ -20,4 +21,5 @@ export default createVuetify({
   components: {
     VStepperVertical,
   },
+  blueprint: md3,
 });

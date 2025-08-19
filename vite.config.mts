@@ -28,17 +28,17 @@ export default defineConfig({
     Components({
       dts: "src/components.d.ts",
     }),
-    Fonts({
-      fontsource: {
-        families: [
-          {
-            name: "Roboto",
-            weights: [100, 300, 400, 500, 700, 900],
-            styles: ["normal", "italic"],
-          },
-        ],
-      },
-    }),
+    // Fonts({
+    //   fontsource: {
+    //     families: [
+    //       {
+    //         name: "Roboto",
+    //         weights: [100, 300, 400, 500, 700, 900],
+    //         styles: ["normal", "italic"],
+    //       },
+    //     ],
+    //   },
+    // }),
   ],
   optimizeDeps: {
     exclude: [
@@ -59,6 +59,10 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 7777,
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
   },
   css: {
     preprocessorOptions: {
