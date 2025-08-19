@@ -10,3 +10,9 @@ declare module "@/pages/404.vue" {
   const component: DefineComponent<{}, {}, any>;
   export default component;
 }
+
+// 允许 md 文件导入
+declare module "*.md" {
+  const content: string;
+  export default content;
+}

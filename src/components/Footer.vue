@@ -18,6 +18,28 @@
       >
         <img :src="tsBadge" style="height: 40px" />
       </a>
+      <!-- Node.js 勋章 -->
+      <a href="https://nodejs.org" title="Node.js 勋章" target="_blank">
+        <img :src="nodejs" style="height: 40px" />
+      </a>
+
+      <!-- Trust SSL 安全签章 -->
+      <a
+        class="trustssl"
+        href="https://www.trustssl.cc/trust.php?sn=Z29iYW5nLmxoNTIwLnB3"
+        title="Trust SSL 安全认证签章"
+        target="_blank"
+      >
+        <img
+          src="https://static.coolcdn.cn/images/TrustSSL.png"
+          style="height: 25px"
+        />
+      </a>
+      <!-- Python 勋章 -->
+      <a href="https://www.python.org" title="Python 勋章" target="_blank">
+        <img :src="python" style="height: 40px" />
+      </a>
+
       <!-- GitHub 勋章 -->
       <a
         href="https://github.com/YuleBest/gobangol"
@@ -26,17 +48,13 @@
       >
         <img :src="githubBadge" style="height: 40px" />
       </a>
-      <!-- Trust SSL 安全签章 -->
+      <!-- Cloudflare  -->
       <a
-        class="trustssl"
-        href="https://www.trustssl.cc/trust.php?sn=Z29iYW5nLmxoNTIwLnB3"
-        title="Trust SSL安全认证签章"
+        href="https://www.cloudflare.com/"
+        title="Cloudflare Pages"
         target="_blank"
       >
-        <img
-          src="https://static.coolcdn.cn/images/TrustSSL.png"
-          style="height: 25px"
-        />
+        <img :src="cloudflare" style="height: 25px" />
       </a>
     </div>
     <div>
@@ -76,6 +94,9 @@
 import vueBadge from "@/assets/image/Vue.png";
 import tsBadge from "@/assets/image/TypeScript.png";
 import githubBadge from "@/assets/image/GitHub.png";
+import cloudflare from "@/assets/image/Cloudflare.png";
+import python from "@/assets/image/Python.png";
+import nodejs from "@/assets/image/Node.js.png";
 </script>
 
 <style scoped>
@@ -92,6 +113,7 @@ import githubBadge from "@/assets/image/GitHub.png";
 
 .medal *:not(.trustssl) {
   margin: 0 -2px;
+  padding: 4px 0;
 }
 
 .medal .trustssl {

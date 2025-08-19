@@ -30,10 +30,38 @@ const items = [
     },
   },
   {
-    title: "版权信息",
+    title: "版权声明 & 开源许可",
     value: 2,
     props: {
       to: "/doc/copyright",
+    },
+  },
+  {
+    title: "在线房间系统 API 文档",
+    value: 3,
+    props: {
+      to: "/doc/api",
+    },
+  },
+  {
+    title: "关于五子棋",
+    value: 4,
+    props: {
+      to: "/doc/gomoku",
+    },
+  },
+  {
+    title: "五子棋 | 禁手规则",
+    value: 5,
+    props: {
+      to: "/doc/forbidden-move",
+    },
+  },
+  {
+    title: "五子棋 | Swap 规则",
+    value: 6,
+    props: {
+      to: "/doc/swap",
     },
   },
 ];
