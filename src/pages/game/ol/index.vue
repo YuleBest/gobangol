@@ -56,6 +56,74 @@
                 </v-btn>
               </v-col>
             </v-row>
+
+            <!-- 房间列表 -->
+            <v-row class="mt-6">
+              <v-col cols="12">
+                <v-card variant="outlined" class="pa-4">
+                  <div class="d-flex justify-space-between align-center mb-4">
+                    <h3 class="text-h6">公开房间列表</h3>
+                    <v-btn
+                      color="primary"
+                      variant="text"
+                      size="small"
+                      @click="getRoomList"
+                      :disabled="!ws || ws.readyState !== 1"
+                    >
+                      <v-icon left size="small">mdi-refresh</v-icon>
+                      刷新
+                    </v-btn>
+                  </div>
+                  
+                  <div v-if="roomList.length === 0" class="text-center py-4">
+                    <v-icon color="grey" size="48" class="mb-2">mdi-home-search</v-icon>
+                    <p class="text-grey">暂无公开房间</p>
+                  </div>
+                  
+                  <v-list v-else>
+                    <v-list-item
+                      v-for="room in roomList"
+                      :key="room.id"
+                      class="mb-2"
+                      border
+                    >
+                      <template v-slot:prepend>
+                        <v-icon color="primary">mdi-home</v-icon>
+                      </template>
+                      
+                      <v-list-item-title>
+                        <strong>房间ID: {{ room.id }}</strong>
+                      </v-list-item-title>
+                      
+                      <v-list-item-subtitle>
+                        <div>房主: {{ room.creator }}</div>
+                        <div>玩家: {{ room.players.length }}/2</div>
+                        <div>观众: {{ room.spectators.length }}</div>
+                        <div>状态: 
+                          <v-chip
+                            size="x-small"
+                            :color="room.roomStatus === 'waiting' ? 'success' : 'info'"
+                          >
+                            {{ room.roomStatus === 'waiting' ? '等待中' : '观战中' }}
+                          </v-chip>
+                        </div>
+                      </v-list-item-subtitle>
+                      
+                      <template v-slot:append>
+                        <v-btn
+                          color="success"
+                          variant="outlined"
+                          size="small"
+                          @click="joinRoomFromList(room.id)"
+                        >
+                          加入
+                        </v-btn>
+                      </template>
+                    </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-col>
+            </v-row>
           </div>
 
           <!-- 创建房间表单 -->
@@ -171,6 +239,14 @@ import { ref, onMounted } from "vue";
 import { ws, connectWS } from "@/services/wsClient";
 import { useRouter } from "vue-router";
 
+interface Room {
+  id: string;
+  creator: string;
+  players: string[];
+  spectators: string[];
+  roomStatus: string;
+}
+
 const creator = ref("");
 const password = ref("");
 const joinRoomId = ref("");
@@ -180,6 +256,8 @@ const showError = ref(false);
 const currentStep = ref<"initial" | "create" | "join">("initial");
 const showJoinPassword = ref(false);
 const joinError = ref("");
+const roomList = ref<Room[]>([]);
+const showRoomList = ref(false);
 
 const router = useRouter();
 
@@ -201,14 +279,47 @@ onMounted(() => {
   // 设置连接超时
   setTimeout(() => {
     if (
-      showLoading.value &&
-      (!ws.value || ws.value.readyState !== WebSocket.OPEN)
-    ) {
+        showLoading.value &&
+        (!ws.value || ws.value.readyState !== 1)
+      ) {
       showLoading.value = false;
       showError.value = true;
     }
   }, 5000); // 5秒超时
+
+  // 连接成功后自动获取房间列表
+  if (ws.value && ws.value.readyState === 1) {
+    getRoomList();
+  } else {
+    // 等待WebSocket连接成功后再获取房间列表
+    const waitForConnection = () => {
+      if (ws.value && ws.value.readyState === 1) {
+        getRoomList();
+      } else {
+        setTimeout(waitForConnection, 100);
+      }
+    };
+    waitForConnection();
+  }
 });
+
+// ---------------- 获取房间列表 ----------------
+function getRoomList() {
+  if (!ws.value || ws.value.readyState !== 1) {
+    return;
+  }
+
+  const listener = (event: MessageEvent) => {
+    const msg = JSON.parse(event.data);
+    if (msg.action === "roomList") {
+      roomList.value = msg.payload;
+      ws.value?.removeEventListener("message", listener);
+    }
+  };
+
+  ws.value.addEventListener("message", listener);
+  ws.value.send(JSON.stringify({ action: "getRoomList" }));
+}
 
 // ---------------- 验证函数 ----------------
 function validateNickname(nickname: string): string | true {
@@ -257,7 +368,7 @@ function handleCreateRoom() {
     return alert(nicknameValidation);
   }
 
-  if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
+  if (!ws.value || ws.value.readyState !== 1) {
     return alert("WebSocket 尚未连接，请稍等...");
   }
 
@@ -283,6 +394,67 @@ function handleCreateRoom() {
   );
 }
 
+// ---------------- 从列表加入房间 ----------------
+function joinRoomFromList(roomId: string) {
+  if (!creator.value) {
+    // 如果用户未输入昵称，先切换到加入房间模式
+    currentStep.value = 'join';
+    joinRoomId.value = roomId;
+    return;
+  }
+
+  const nicknameValidation = validateNickname(creator.value);
+  if (nicknameValidation !== true) {
+    currentStep.value = 'join';
+    joinRoomId.value = roomId;
+    return;
+  }
+
+  if (!ws.value || ws.value.readyState !== 1) {
+    return alert("WebSocket 尚未连接，请稍等...");
+  }
+
+  // 监听加入房间响应
+  const listener = (event: MessageEvent) => {
+    const msg = JSON.parse(event.data);
+
+    if (msg.action === "joinedRoom") {
+      // 成功加入房间
+      ws.value?.removeEventListener("message", listener);
+      router.push({
+        path: "/game/ol/play",
+        query: { creator: creator.value, roomId },
+      });
+    } else if (msg.action === "error") {
+      // 加入房间失败
+      const errorMsg = msg.payload;
+      if (errorMsg.includes("密码错误")) {
+        // 需要密码，切换到加入房间模式
+        currentStep.value = 'join';
+        joinRoomId.value = roomId;
+        joinError.value = "此房间需要密码";
+        showJoinPassword.value = true;
+      } else {
+        alert(errorMsg);
+      }
+    }
+  };
+
+  ws.value.addEventListener("message", listener);
+
+  // 发送加入房间请求（无密码）
+  ws.value.send(
+    JSON.stringify({
+      action: "joinRoom",
+      payload: {
+        roomId,
+        user: creator.value,
+        password: "",
+      },
+    })
+  );
+}
+
 // ---------------- 加入房间 ----------------
 function handleJoinRoom() {
   if (!creator.value) return alert("请输入昵称");
@@ -295,7 +467,7 @@ function handleJoinRoom() {
   const id = joinRoomId.value;
   if (!id) return alert("请输入房间ID");
 
-  if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
+  if (!ws.value || ws.value.readyState !== 1) {
     return alert("WebSocket 尚未连接，请稍等...");
   }
 
