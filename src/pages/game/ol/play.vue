@@ -1,186 +1,195 @@
 <template>
   <v-app>
     <v-main>
-      <v-container class="py-6" max-width="900px">
-        <v-card elevation="8" class="rounded-lg">
-          <v-card-title class="text-h5 font-weight-bold primary white--text">
-            <v-icon left class="mr-2">mdi-chess-king</v-icon>
-            房间: {{ roomId }}
-            <v-spacer></v-spacer>
-            <v-chip class="font-weight-bold" small>
-              <v-icon left small>{{ roomStatusIcon }}</v-icon>
-              {{ roomStatusText }}
-            </v-chip>
-          </v-card-title>
-
-          <v-card-subtitle class="py-3 grey lighten-4">
-            <v-row no-gutters align="center">
-              <v-col cols="12" md="6">
-                <div class="d-flex align-center mb-2">
-                  <v-icon color="primary" class="mr-2"
-                    >mdi-account-group</v-icon
-                  >
-                  <span class="text-subtitle-1 font-weight-medium">玩家</span>
-                </div>
-                <v-chip-group>
-                  <v-chip
-                    v-for="player in currentRoom.players"
-                    :key="player"
-                    color="success"
-                    text-color="white"
-                    small
-                    class="ma-1"
-                  >
-                    <v-avatar left size="20" class="mr-1">
-                      <v-icon small>mdi-account</v-icon>
-                    </v-avatar>
-                    {{ player }}
-                  </v-chip>
-                </v-chip-group>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="d-flex align-center mb-2">
-                  <v-icon color="info" class="mr-2">mdi-eye</v-icon>
-                  <span class="text-subtitle-1 font-weight-medium">观众</span>
-                </div>
-                <v-chip-group>
-                  <v-chip
-                    v-for="spectator in currentRoom.spectators"
-                    :key="spectator"
-                    color="info"
-                    text-color="white"
-                    small
-                    class="ma-1"
-                  >
-                    <v-avatar left size="20" class="mr-1">
-                      <v-icon small>mdi-eye-outline</v-icon>
-                    </v-avatar>
-                    {{ spectator }}
-                  </v-chip>
-                </v-chip-group>
-              </v-col>
-            </v-row>
-          </v-card-subtitle>
-
-          <v-divider></v-divider>
-
-          <v-card-text>
-            <v-row>
-              <v-col cols="12" md="8">
-                <div class="d-flex align-center mb-3">
-                  <div class="text-h6 font-weight-medium">游戏聊天</div>
-                  <v-spacer></v-spacer>
-                  <v-btn
-                    icon
-                    size="small"
-                    variant="text"
-                    @click="refreshRoomInfo"
-                    :loading="refreshing"
-                    title="刷新房间信息"
-                  >
-                    <v-icon>mdi-refresh</v-icon>
-                  </v-btn>
-                </div>
-                <v-card elevation="2" class="chat-container rounded-lg pa-2" ref="chatContainer">
-                  <div class="chat-messages">
-                    <div
-                     v-for="(msg, idx) in messages"
-                     :key="idx"
-                     class="message-wrapper"
-                     :class="{ 'my-message': msg.playerName === creator }"
-                   >
-                     <div class="message-bubble">
-                       <div class="message-avatar">
-                         <v-avatar size="32" :color="msg.playerName === creator ? 'success' : 'primary'" class="elevation-1">
-                           <span class="white--text text-caption font-weight-bold">
-                             {{ msg.playerName.charAt(0).toUpperCase() }}
-                           </span>
-                         </v-avatar>
-                       </div>
-                       <div class="message-content">
-                         <div class="message-header">
-                           <span class="message-sender font-weight-medium">
-                             {{ msg.playerName }}
-                           </span>
-                           <span class="message-time text-caption grey--text">
-                             {{ formatTime(msg.timestamp || new Date()) }}
-                           </span>
-                         </div>
-                         <div 
-                          class="message-text"
-                          :class="{ 'my-message-text': msg.playerName === creator, 'others-message-text': msg.playerName !== creator }"
-                        >
-                          {{ msg.message }}
-                        </div>
-                       </div>
-                     </div>
-                   </div>
-                  </div>
-                </v-card>
-              </v-col>
-              <v-col cols="12" md="4">
-                <div class="text-h6 mb-3 font-weight-medium">游戏信息</div>
-                <v-card elevation="2" class="rounded-lg pa-4">
-                  <div class="text-body-2">
-                    <div class="d-flex justify-space-between mb-2">
-                      <span>房间ID:</span>
-                      <v-chip small color="grey lighten-2">{{ roomId }}</v-chip>
-                    </div>
-                    <div class="d-flex justify-space-between mb-2">
-                      <span>当前玩家:</span>
-                      <span class="font-weight-medium">{{
-                        currentRoom.players.length
-                      }}</span>
-                    </div>
-                    <div class="d-flex justify-space-between">
-                      <span>当前观众:</span>
-                      <span class="font-weight-medium">{{
-                        currentRoom.spectators.length
-                      }}</span>
-                    </div>
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card-text>
-
-          <v-divider></v-divider>
-
-          <v-card-actions class="px-6 py-4">
-            <v-row no-gutters align="center">
-              <v-col cols="12" md="9">
-                <v-text-field
-                  v-model="chatInput"
-                  label="输入消息..."
-                  outlined
-                  dense
-                  hide-details
-                  prepend-inner-icon="mdi-message-text"
-                  class="mr-3"
-                  @keyup.enter="sendMessage"
-                />
-              </v-col>
-              <v-col cols="12" md="3" class="d-flex justify-end">
-                <v-btn
-                  color="primary"
-                  large
-                  elevation="2"
-                  :disabled="!chatInput.trim()"
-                  @click="sendMessage"
-                  class="mr-2"
+      <!-- <v-container class="py-6" max-width="900px"> -->
+      <!-- <v-card elevation="8" class="rounded-lg"> -->
+      <!-- <v-card-title class="text-h5 font-weight-bold primary white--text"> -->
+      <!-- <v-icon left class="mr-2">mdi-chess-king</v-icon>
+          房间: {{ roomId }} -->
+      <!-- <v-spacer></v-spacer> -->
+      <!-- </v-card-title> -->
+      <!-- <v-card-subtitle class="py-3 grey lighten-4">
+          <v-row no-gutters align="center"> -->
+      <!-- <v-col cols="12" md="6">
+              <div class="d-flex align-center mb-2">
+                <v-icon color="primary" class="mr-2">mdi-account-group</v-icon>
+                <span class="text-subtitle-1 font-weight-medium">玩家</span>
+              </div>
+              <v-chip-group>
+                <v-chip
+                  v-for="player in currentRoom.players"
+                  :key="player"
+                  color="success"
+                  text-color="white"
+                  small
+                  class="ma-1"
                 >
-                  <v-icon left>mdi-send</v-icon>
-                  发送
-                </v-btn>
-                <v-btn color="error" large outlined @click="leaveRoom">
-                  <v-icon left>mdi-exit-to-app</v-icon>
-                  离开
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-card-actions>
-        </v-card>
-      </v-container>
+                  <v-avatar left size="20" class="mr-1">
+                    <v-icon small>mdi-account</v-icon>
+                  </v-avatar>
+                  {{ player }}
+                </v-chip>
+              </v-chip-group>
+            </v-col>
+            <v-col cols="12" md="6">
+              <div class="d-flex align-center mb-2">
+                <v-icon color="info" class="mr-2">mdi-eye</v-icon>
+                <span class="text-subtitle-1 font-weight-medium">观众</span>
+              </div>
+              <v-chip-group>
+                <v-chip
+                  v-for="spectator in currentRoom.spectators"
+                  :key="spectator"
+                  color="info"
+                  text-color="white"
+                  small
+                  class="ma-1"
+                >
+                  <v-avatar left size="20" class="mr-1">
+                    <v-icon small>mdi-eye-outline</v-icon>
+                  </v-avatar>
+                  {{ spectator }}
+                </v-chip>
+              </v-chip-group>
+            </v-col> -->
+      <!-- </v-row>
+        </v-card-subtitle> -->
+
+      <v-divider></v-divider>
+
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center mb-3">
+              <div class="text-h6 font-weight-medium">游戏聊天</div>
+              <v-spacer></v-spacer>
+              <v-btn
+                icon
+                size="small"
+                variant="text"
+                @click="refreshRoomInfo"
+                :loading="refreshing"
+                title="刷新房间信息"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
+            </div>
+            <v-card
+              elevation="2"
+              class="chat-container rounded-lg pa-2"
+              ref="chatContainer"
+            >
+              <div class="chat-messages">
+                <div
+                  v-for="(msg, idx) in messages"
+                  :key="idx"
+                  class="message-wrapper"
+                  :class="{ 'my-message': msg.playerName === creator }"
+                >
+                  <div class="message-bubble">
+                    <div class="message-avatar">
+                      <v-avatar
+                        size="32"
+                        :color="
+                          msg.playerName === creator ? 'success' : 'primary'
+                        "
+                        class="elevation-1"
+                      >
+                        <span class="white--text text-caption font-weight-bold">
+                          {{ msg.playerName.charAt(0).toUpperCase() }}
+                        </span>
+                      </v-avatar>
+                    </div>
+                    <div class="message-content">
+                      <div class="message-header">
+                        <span class="message-sender font-weight-medium">
+                          {{ msg.playerName }}
+                        </span>
+                        <span class="message-time text-caption grey--text">
+                          {{ formatTime(msg.timestamp || new Date()) }}
+                        </span>
+                      </div>
+                      <div
+                        class="message-text"
+                        :class="{
+                          'my-message-text': msg.playerName === creator,
+                          'others-message-text': msg.playerName !== creator,
+                        }"
+                      >
+                        {{ msg.message }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="4">
+            <div class="text-h6 mb-3 font-weight-medium">
+              游戏信息
+              <v-chip class="font-weight-bold" small>
+                <v-icon left small>{{ roomStatusIcon }}</v-icon>
+                {{ roomStatusText }}
+              </v-chip>
+            </div>
+            <v-card elevation="2" class="rounded-lg pa-4">
+              <div class="text-body-2">
+                <div class="d-flex justify-space-between mb-2">
+                  <span>房间ID:</span>
+                  <v-chip small color="grey lighten-2">{{ roomId }}</v-chip>
+                </div>
+                <div class="d-flex justify-space-between mb-2">
+                  <span>当前玩家:</span>
+                </div>
+                <div class="d-flex justify-space-between">
+                  <span>当前观众: </span>
+                  <span class="font-weight-medium">{{
+                    currentRoom.spectators.length
+                  }}</span>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-divider></v-divider>
+
+      <v-card-actions class="px-6 py-4">
+        <v-row no-gutters align="center">
+          <v-col cols="12" md="9">
+            <v-text-field
+              v-model="chatInput"
+              label="输入消息..."
+              outlined
+              dense
+              hide-details
+              prepend-inner-icon="mdi-message-text"
+              class="mr-3"
+              @keyup.enter="sendMessage"
+            />
+          </v-col>
+          <v-col cols="12" md="3" class="d-flex justify-end">
+            <v-btn
+              color="primary"
+              large
+              elevation="2"
+              :disabled="!chatInput.trim()"
+              @click="sendMessage"
+              class="mr-2"
+            >
+              <v-icon left>mdi-send</v-icon>
+              发送
+            </v-btn>
+            <v-btn color="error" large outlined @click="leaveRoom">
+              <v-icon left>mdi-exit-to-app</v-icon>
+              离开
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-actions>
+      <!-- </v-card> -->
+      <!-- </v-container> -->
     </v-main>
   </v-app>
 </template>
@@ -223,9 +232,9 @@ let roomListInterval: number | null = null;
 
 // 格式化时间
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('zh-CN', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  return date.toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -284,7 +293,7 @@ function handleWSMessage(msg: any) {
         };
         messages.value = (payload.messages || []).map((msg: any) => ({
           ...msg,
-          timestamp: new Date()
+          timestamp: new Date(),
         }));
       }
       break;
@@ -302,7 +311,7 @@ function handleWSMessage(msg: any) {
     case "newMessage":
       messages.value.push({
         ...payload,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
       scrollToBottom();
       break;
@@ -319,15 +328,15 @@ function handleWSMessage(msg: any) {
 // ---------------- 房间信息 ----------------
 function refreshRoomInfo() {
   if (!ws.value) return;
-  
+
   refreshing.value = true;
   ws.value.send(
     JSON.stringify({
       action: "getRoomInfo",
-      payload: { roomId }
+      payload: { roomId },
     })
   );
-  
+
   // 2秒后自动关闭加载状态
   setTimeout(() => {
     refreshing.value = false;
@@ -351,7 +360,7 @@ function sendMessage() {
       payload: { roomId, playerName: creator, message: chatInput.value },
     })
   );
-  
+
   chatInput.value = "";
   scrollToBottom();
 }
@@ -500,7 +509,7 @@ onBeforeUnmount(() => {
   .chat-container {
     height: 300px;
   }
-  
+
   .message-bubble {
     max-width: 85%;
   }
