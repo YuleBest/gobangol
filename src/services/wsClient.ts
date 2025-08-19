@@ -3,7 +3,11 @@ import { ref } from "vue";
 
 export const ws = ref<WebSocket | null>(null);
 
-export function connectWS(url: string, onOpen?: () => void) {
+export function connectWS(
+  url: string,
+  onOpen?: () => void,
+  onError?: () => void
+) {
   if (ws.value && ws.value.readyState === WebSocket.OPEN) {
     console.log("[WS] 已存在连接，复用中");
     onOpen?.();
@@ -22,7 +26,10 @@ export function connectWS(url: string, onOpen?: () => void) {
     ws.value = null;
   };
 
-  ws.value.onerror = (err) => console.error("[WS] 错误", err);
+  ws.value.onerror = (err) => {
+    console.error("[WS] 错误", err);
+    onError?.();
+  };
 }
 
 export function closeWS() {
