@@ -4,11 +4,12 @@
     class="text-center d-flex flex-column ga-2 py-4"
     style="line-height: 0.5"
   >
-    <div>本站已被访问过 <span id="busuanzi_site_pv"></span> 次</div>
+    <div>本站总访问量 <span id="busuanzi_site_pv">加载中...</span></div>
+
     <div class="medal">
       <!-- Vue 勋章 -->
       <a href="https://vuejs.org" title="Vue 勋章" target="_blank">
-        <img :src="vueBadge" style="height: 40px" />
+        <img :src="vueBadge" style="height: 40px" loading="lazy" />
       </a>
       <!-- TypeScript 勋章 -->
       <a
@@ -16,11 +17,11 @@
         title="TypeScript 勋章"
         target="_blank"
       >
-        <img :src="tsBadge" style="height: 40px" />
+        <img :src="tsBadge" style="height: 40px" loading="lazy" />
       </a>
       <!-- Node.js 勋章 -->
       <a href="https://nodejs.org" title="Node.js 勋章" target="_blank">
-        <img :src="nodejs" style="height: 40px" />
+        <img :src="nodejs" style="height: 40px" loading="lazy" />
       </a>
 
       <!-- Trust SSL 安全签章 -->
@@ -33,11 +34,12 @@
         <img
           src="https://static.coolcdn.cn/images/TrustSSL.png"
           style="height: 25px"
+          loading="lazy"
         />
       </a>
       <!-- Python 勋章 -->
       <a href="https://www.python.org" title="Python 勋章" target="_blank">
-        <img :src="python" style="height: 40px" />
+        <img :src="python" style="height: 40px" loading="lazy" />
       </a>
 
       <!-- GitHub 勋章 -->
@@ -46,7 +48,7 @@
         title="GitHub 勋章"
         target="_blank"
       >
-        <img :src="githubBadge" style="height: 40px" />
+        <img :src="githubBadge" style="height: 40px" loading="lazy" />
       </a>
       <!-- Cloudflare  -->
       <a
@@ -54,7 +56,7 @@
         title="Cloudflare Pages"
         target="_blank"
       >
-        <img :src="cloudflare" style="height: 25px" />
+        <img :src="cloudflare" style="height: 25px" loading="lazy" />
       </a>
     </div>
     <div>

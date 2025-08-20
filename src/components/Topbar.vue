@@ -51,6 +51,7 @@
             </v-menu>
           </div>
 
+          <!-- 账户系统待完善 -->
           <!-- 右侧头像
           <v-avatar size="32" class="ml-3">
             <img :src="avatar" alt="User Avatar" />

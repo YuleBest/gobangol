@@ -1,75 +1,46 @@
 <template>
   <Topbar />
-  <v-card class="fill-height">
-    <v-layout>
-      <v-main class="d-flex flex-column">
-        <!-- 欢迎区域 -->
-        <div
-          class="welcome-section d-flex flex-column justify-center text-center text-white"
-          :style="{
-            backgroundImage: `url(${isDarkMode ? IndexBgBlack : IndexBgWhite})`,
-          }"
-        >
-          <h1 class="welcome-title">欢迎来到 Gobang OL</h1>
-          <p class="welcome-subtitle">享受对弈的乐趣吧</p>
-        </div>
+  <div class="main">
+    <div class="welcome-section">
+      <h1 class="welcome-title">Discover the</h1>
+      <h1 class="welcome-title">Magic of Gobang</h1>
+      <p class="welcome-subtitle">
+        放松心情，开启五子棋之旅！与好友或对手轻松对弈，Gobang OL
+        让每一步都充满乐趣！
+      </p>
+    </div>
 
-        <!-- 游戏模式选择 -->
-        <div class="game-section">
-          <v-container>
-            <v-row>
-              <v-col
-                cols="12"
-                md="6"
-                lg="3"
-                v-for="card in gameCards"
-                :key="card.title"
-              >
-                <v-card class="game-card" :to="card.to" hover elevation="4">
-                  <v-card-item>
-                    <v-icon size="48" :color="card.color" class="mb-3">{{
-                      card.icon
-                    }}</v-icon>
-                    <v-card-title>{{ card.title }}</v-card-title>
-                    <v-card-text>{{ card.text }}</v-card-text>
-                  </v-card-item>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-container>
-        </div>
-
-        <!-- 游戏介绍 -->
-        <div class="tips-section">
-          <v-container>
-            <v-card elevation="2" class="about-card">
-              <v-card-title> 关于五子棋 </v-card-title>
-              <v-card-text>
-                五子棋起源于中国，是全国智力运动会竞技项目之一，是一种两人对弈的纯策略型棋类游戏。又称连五子、五子连、串珠、五目、五目碰或五格等。
-              </v-card-text>
-              <v-card-actions>
-                <v-btn
-                  href="https://baike.baidu.com/item/%E4%BA%94%E5%AD%90%E6%A3%8B/130266"
-                  target="_blank"
-                >
-                  了解更多↗
-                </v-btn>
-              </v-card-actions>
+    <div class="game-section">
+      <v-container fluid class="px-0">
+        <v-row>
+          <v-col
+            cols="12"
+            sm="6"
+            md="6"
+            lg="3"
+            v-for="card in gameCards"
+            :key="card.title"
+          >
+            <v-card class="game-card" :to="card.to" hover elevation="4">
+              <v-card-item>
+                <v-icon size="48" class="mb-3">
+                  {{ card.icon }}
+                </v-icon>
+                <v-card-title>{{ card.title }}</v-card-title>
+                <v-card-text>{{ card.text }}</v-card-text>
+              </v-card-item>
             </v-card>
-          </v-container>
-        </div>
-      </v-main>
-    </v-layout>
-    <Footer />
-  </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+    </div>
+  </div>
+  <Footer />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { useTheme } from "vuetify";
-import IndexBgWhite from "@/assets/image/IndexBg_white.jpg";
-import IndexBgBlack from "@/assets/image/IndexBg_black.png";
-
 const theme = useTheme();
 const isDarkMode = ref(theme.global.current.value.dark);
 
@@ -116,51 +87,35 @@ const gameCards = [
 </script>
 
 <style scoped>
+.main {
+  margin: 0 40px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .welcome-section {
-  padding: 20px;
-  height: 80vh;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  position: relative;
+  height: 50vh;
+  width: 80vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: left;
+  align-self: flex-start;
 }
-.welcome-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 0;
+
+.welcome-section h1 {
+  font-stretch: expanded;
+  line-height: 1.2;
+  font-size: 50px;
 }
-.welcome-section::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background: linear-gradient(to bottom, transparent, #fff);
-  z-index: 0;
+
+.welcome-section p {
+  padding-top: 8px;
+  font-size: 16px;
 }
-.v-theme--dark .welcome-section::after {
-  background: linear-gradient(to bottom, transparent, #212121);
-  height: 100px;
-}
-.welcome-section > * {
-  position: relative;
-  z-index: 1;
-}
-.welcome-title {
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-.welcome-subtitle {
-  font-size: 20px;
-}
-.game-section {
-  padding: 40px 20px;
-}
+
 .game-card {
   height: 100%;
   text-align: center;
@@ -168,40 +123,46 @@ const gameCards = [
   cursor: pointer;
   border: 2px solid rgba(255, 192, 203, 0.144);
 }
+
 .game-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
 }
-.tips-section {
-  padding: 0 20px 20px;
-}
+
 .about-card {
   height: 100%;
-  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 .tips-section .v-card {
   border: 2px solid rgba(192, 240, 255, 0.144);
 }
+
 @media (max-width: 768px) {
   .welcome-section {
-    height: 50vh;
+    padding: 20px;
+    height: 40vh;
+    width: 80vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
-  .welcome-title {
+
+  .welcome-section h1 {
+    font-stretch: expanded;
+    line-height: 1.2;
     font-size: 32px;
+    text-align: center;
   }
-  .welcome-subtitle {
-    font-size: 16px;
-  }
-}
-@media (max-width: 600px) {
-  .welcome-title {
-    font-size: 28px;
-  }
-  .welcome-section {
-    padding: 20px 10px 10px;
+
+  .welcome-section p {
+    padding-top: 8px;
+    font-size: 14px;
+    word-wrap: break-word;
+    text-align: center;
   }
 }
 </style>
