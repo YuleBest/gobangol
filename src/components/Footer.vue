@@ -4,7 +4,9 @@
     class="text-center d-flex flex-column ga-2 py-4"
     style="line-height: 0.5"
   >
-    <div>本站总访问量 <span id="busuanzi_site_pv">加载中...</span></div>
+    <div>
+      本站总访问量 <span id="busuanzi_container_site_pv">加载中...</span>
+    </div>
 
     <div class="medal">
       <!-- Vue 勋章 -->

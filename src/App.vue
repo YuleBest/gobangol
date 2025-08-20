@@ -9,7 +9,8 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const script = document.createElement("script");
-  script.src = "//api.busuanzi.cc/static/3.6.9/busuanzi.min.js";
+  script.src = "//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
+  script.async = true;
   document.body.appendChild(script);
 });
 </script>

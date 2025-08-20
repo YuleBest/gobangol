@@ -44,6 +44,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 - 本站所引用的可爱勋章（包括页脚的 Github、TypeScript、Vue、Cloudflare 等）以及 404 页面中的 “404NotFound” 徽章，均来自 [SAWARATSUKI](https://github.com/SAWRATSUKI) 的授权。SAWARATSUKI 为 KawaiiLogos 创建了一个新的仓库，完整徽章列表可在该仓库中查看。未收录于该仓库的徽章暂时遵循 CC BY 4.0 许可协议。 特别感谢 SAWARATSUKI 创作的可爱徽章！
 
-- 访问量统计：[不蒜子](https://www.busuanzi.cc/)，特别感谢不蒜子提供的免费访问量与访问人数统计！
+- 访问量统计：[不蒜子](https://busuanzi.ibruce.info/)，特别感谢不蒜子提供的免费访问量与访问人数统计！
 
 - SSL 安全认证签章：[TrustSSL](https://www.trustssl.cc/)，特别感谢 TrustSSL 提供的 SSL 安全认证！

@@ -21,15 +21,21 @@
             v-for="card in gameCards"
             :key="card.title"
           >
-            <v-card class="game-card" :to="card.to" hover elevation="4">
-              <v-card-item>
-                <v-icon size="48" class="mb-3">
-                  {{ card.icon }}
-                </v-icon>
-                <v-card-title>{{ card.title }}</v-card-title>
-                <v-card-text>{{ card.text }}</v-card-text>
-              </v-card-item>
-            </v-card>
+            <div class="game-card" @click="goTo(card.to)">
+              <!-- 原内容 -->
+              <div class="card-content">
+                <div class="icon-and-title">
+                  <v-icon :icon="card.icon" class="icon"></v-icon>
+                  <h3 class="title">{{ card.title }}</h3>
+                </div>
+                <div class="text-and-content">
+                  <p class="text">{{ card.text }}</p>
+                </div>
+              </div>
+
+              <!-- 鼠标悬停提示 -->
+              <div class="hover-play">Play now &gt;</div>
+            </div>
           </v-col>
         </v-row>
       </v-container>
@@ -39,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import router from "@/router";
 import { ref, onMounted, watch } from "vue";
 import { useTheme } from "vuetify";
 const theme = useTheme();
@@ -48,6 +55,10 @@ onMounted(() => {
   const saved = localStorage.getItem("themeMode");
   if (saved) theme.change(saved);
 });
+
+function goTo(path: string) {
+  router.push(path);
+}
 
 watch(
   () => theme.global.current.value.dark,
@@ -93,11 +104,12 @@ const gameCards = [
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  min-height: calc(100vh - 60px);
 }
 
 .welcome-section {
   height: 50vh;
-  width: 80vw;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -117,38 +129,102 @@ const gameCards = [
 }
 
 .game-card {
+  position: relative;
+  border: 1.5px solid;
+  border-radius: 10px;
   height: 100%;
-  text-align: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: 2px solid rgba(255, 192, 203, 0.144);
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  user-select: none;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+  background-color: var(--v-theme-surface);
+  color: var(--v-theme-on-surface); /* 使用主题文字颜色 */
+}
+
+.game-card .card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.game-card:hover .card-content {
+  opacity: 0;
+}
+
+.game-card .hover-play {
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: left 0.5s ease, color 0.3s ease;
+  color: white;
 }
 
 .game-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  background-color: #000;
+  cursor: pointer;
 }
 
-.about-card {
-  height: 100%;
+.game-card .hover-play {
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: left 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  color: white;
+}
+
+.game-card:hover .hover-play {
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 1;
+}
+
+.icon-and-title {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 
-.tips-section .v-card {
-  border: 2px solid rgba(192, 240, 255, 0.144);
+.text-and-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
-  .welcome-section {
-    padding: 20px;
-    height: 40vh;
-    width: 80vw;
+  .main {
+    margin: 0 20px 40px 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+  }
+
+  .welcome-section {
+    padding: 20px;
+    height: 40vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
   }
 
   .welcome-section h1 {

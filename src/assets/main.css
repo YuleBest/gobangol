@@ -43,3 +43,14 @@ code {
   word-wrap: break-word;
   white-space: pre-wrap;
 }
+
+/* 改变文字被选中时的背景色和文字颜色 */
+::selection {
+  background-color: rgba(156, 156, 156, 0.144);
+  color: pink;
+}
+
+::-moz-selection {
+  background-color: rgba(156, 156, 156, 0.144);
+  color: pink;
+}
