@@ -74,12 +74,14 @@
                       刷新
                     </v-btn>
                   </div>
-                  
+
                   <div v-if="roomList.length === 0" class="text-center py-4">
-                    <v-icon color="grey" size="48" class="mb-2">mdi-home-search</v-icon>
+                    <v-icon color="grey" size="48" class="mb-2"
+                      >mdi-home-search</v-icon
+                    >
                     <p class="text-grey">暂无公开房间</p>
                   </div>
-                  
+
                   <v-list v-else>
                     <v-list-item
                       v-for="room in roomList"
@@ -90,31 +92,38 @@
                       <template v-slot:prepend>
                         <v-icon color="primary">mdi-home</v-icon>
                       </template>
-                      
+
                       <v-list-item-title>
                         <strong>房间ID: {{ room.id }}</strong>
                       </v-list-item-title>
-                      
+
                       <v-list-item-subtitle>
                         <div>房主: {{ room.creator }}</div>
                         <div>玩家: {{ room.players.length }}/2</div>
                         <div>观众: {{ room.spectators.length }}</div>
-                        <div>状态: 
+                        <div>
+                          状态:
                           <v-chip
                             size="x-small"
-                            :color="room.roomStatus === 'waiting' ? 'success' : 'info'"
+                            :color="
+                              room.roomStatus === 'waiting' ? 'success' : 'info'
+                            "
                           >
-                            {{ room.roomStatus === 'waiting' ? '等待中' : '观战中' }}
+                            {{
+                              room.roomStatus === "waiting"
+                                ? "等待中"
+                                : "观战中"
+                            }}
                           </v-chip>
                         </div>
                       </v-list-item-subtitle>
-                      
+
                       <template v-slot:append>
                         <v-btn
                           color="success"
                           variant="outlined"
                           size="small"
-                          @click="joinRoomFromList(room.id)"
+                          @click="requestTokenAndJoin(room.id)"
                         >
                           加入
                         </v-btn>
@@ -247,6 +256,7 @@ interface Room {
   roomStatus: string;
 }
 
+// ---------- 状态 ----------
 const creator = ref("");
 const password = ref("");
 const joinRoomId = ref("");
@@ -259,6 +269,8 @@ const joinError = ref("");
 const roomList = ref<Room[]>([]);
 const showRoomList = ref(false);
 
+const joinToken = ref(""); // 内存保存 token
+
 const router = useRouter();
 
 // ---------------- 初始化 WS ----------------
@@ -266,49 +278,27 @@ onMounted(() => {
   connectWS(
     "ws://api.gobang.lh520.pw/ws",
     () => {
-      // 连接成功
       showLoading.value = false;
+      getRoomList();
     },
     () => {
-      // 连接错误
       showLoading.value = false;
       showError.value = true;
     }
   );
 
-  // 设置连接超时
+  // 连接超时处理
   setTimeout(() => {
-    if (
-        showLoading.value &&
-        (!ws.value || ws.value.readyState !== 1)
-      ) {
+    if (showLoading.value && (!ws.value || ws.value.readyState !== 1)) {
       showLoading.value = false;
       showError.value = true;
     }
-  }, 5000); // 5秒超时
-
-  // 连接成功后自动获取房间列表
-  if (ws.value && ws.value.readyState === 1) {
-    getRoomList();
-  } else {
-    // 等待WebSocket连接成功后再获取房间列表
-    const waitForConnection = () => {
-      if (ws.value && ws.value.readyState === 1) {
-        getRoomList();
-      } else {
-        setTimeout(waitForConnection, 100);
-      }
-    };
-    waitForConnection();
-  }
+  }, 5000);
 });
 
 // ---------------- 获取房间列表 ----------------
 function getRoomList() {
-  if (!ws.value || ws.value.readyState !== 1) {
-    return;
-  }
-
+  if (!ws.value || ws.value.readyState !== 1) return;
   const listener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
     if (msg.action === "roomList") {
@@ -316,20 +306,17 @@ function getRoomList() {
       ws.value?.removeEventListener("message", listener);
     }
   };
-
   ws.value.addEventListener("message", listener);
   ws.value.send(JSON.stringify({ action: "getRoomList" }));
 }
 
-// ---------------- 验证函数 ----------------
+// ---------------- 验证昵称 ----------------
 function validateNickname(nickname: string): string | true {
   const specialChars = /[/\[\]*^@#<>|"'&$+={}]/;
-  if (specialChars.test(nickname)) {
+  if (specialChars.test(nickname))
     return "昵称不能包含特殊符号: /[]*^@#<>|'&$+={}";
-  }
-  if (nickname.length < 1 || nickname.length > 20) {
+  if (nickname.length < 1 || nickname.length > 20)
     return "昵称长度必须在1-20个字符之间";
-  }
   return true;
 }
 
@@ -357,35 +344,31 @@ function backToInitial() {
   joinRoomPassword.value = "";
   showJoinPassword.value = false;
   joinError.value = "";
+  joinToken.value = "";
 }
 
 // ---------------- 创建房间 ----------------
 function handleCreateRoom() {
   if (!creator.value) return alert("请输入昵称");
-
   const nicknameValidation = validateNickname(creator.value);
-  if (nicknameValidation !== true) {
-    return alert(nicknameValidation);
-  }
-
-  if (!ws.value || ws.value.readyState !== 1) {
+  if (nicknameValidation !== true) return alert(nicknameValidation);
+  if (!ws.value || ws.value.readyState !== 1)
     return alert("WebSocket 尚未连接，请稍等...");
-  }
 
   const listener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
     if (msg.action === "roomCreated" && msg.payload.creator === creator.value) {
+      joinToken.value = msg.payload.joinToken; // 保存 token
       const roomId = msg.payload.id;
       ws.value?.removeEventListener("message", listener);
       router.push({
         path: "/game/ol/play",
-        query: { creator: creator.value, roomId, isCreator: "true" },
+        query: { roomId }, // 不再放 token
       });
     }
   };
 
   ws.value.addEventListener("message", listener);
-
   ws.value.send(
     JSON.stringify({
       action: "createRoom",
@@ -394,18 +377,17 @@ function handleCreateRoom() {
   );
 }
 
-// ---------------- 从列表加入房间 ----------------
-function joinRoomFromList(roomId: string) {
+// ---------------- 请求临时 token 并加入房间 ----------------
+function requestTokenAndJoin(roomId: string) {
   if (!creator.value) {
-    // 如果用户未输入昵称，先切换到加入房间模式
-    currentStep.value = 'join';
+    currentStep.value = "join";
     joinRoomId.value = roomId;
     return;
   }
 
   const nicknameValidation = validateNickname(creator.value);
   if (nicknameValidation !== true) {
-    currentStep.value = 'join';
+    currentStep.value = "join";
     joinRoomId.value = roomId;
     return;
   }
@@ -414,43 +396,24 @@ function joinRoomFromList(roomId: string) {
     return alert("WebSocket 尚未连接，请稍等...");
   }
 
-  // 监听加入房间响应
-  const listener = (event: MessageEvent) => {
+  const tokenListener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
-
-    if (msg.action === "joinedRoom") {
-      // 成功加入房间
-      ws.value?.removeEventListener("message", listener);
-      router.push({
-        path: "/game/ol/play",
-        query: { creator: creator.value, roomId },
-      });
+    if (msg.action === "roomCreated" && msg.payload.joinToken) {
+      joinToken.value = msg.payload.joinToken;
+      ws.value?.removeEventListener("message", tokenListener);
+      handleJoinRoom();
     } else if (msg.action === "error") {
-      // 加入房间失败
-      const errorMsg = msg.payload;
-      if (errorMsg.includes("密码错误")) {
-        // 需要密码，切换到加入房间模式
-        currentStep.value = 'join';
-        joinRoomId.value = roomId;
-        joinError.value = "此房间需要密码";
-        showJoinPassword.value = true;
-      } else {
-        alert(errorMsg);
-      }
+      alert(msg.payload);
+      ws.value?.removeEventListener("message", tokenListener);
     }
   };
 
-  ws.value.addEventListener("message", listener);
+  ws.value.addEventListener("message", tokenListener);
 
-  // 发送加入房间请求（无密码）
   ws.value.send(
     JSON.stringify({
-      action: "joinRoom",
-      payload: {
-        roomId,
-        user: creator.value,
-        password: "",
-      },
+      action: "requestToken",
+      payload: { roomId, user: creator.value },
     })
   );
 }
@@ -458,43 +421,30 @@ function joinRoomFromList(roomId: string) {
 // ---------------- 加入房间 ----------------
 function handleJoinRoom() {
   if (!creator.value) return alert("请输入昵称");
-
   const nicknameValidation = validateNickname(creator.value);
-  if (nicknameValidation !== true) {
-    return alert(nicknameValidation);
-  }
+  if (nicknameValidation !== true) return alert(nicknameValidation);
 
   const id = joinRoomId.value;
   if (!id) return alert("请输入房间ID");
-
-  if (!ws.value || ws.value.readyState !== 1) {
+  if (!ws.value || ws.value.readyState !== 1)
     return alert("WebSocket 尚未连接，请稍等...");
-  }
-
-  // 检查密码输入（仅在显示密码框时）
-  if (showJoinPassword.value && !joinRoomPassword.value) {
+  if (showJoinPassword.value && !joinRoomPassword.value)
     return alert("请输入房间密码");
-  }
+  if (!joinToken.value) return alert("加入房间失败：token 不存在，请重新获取");
 
-  // 监听加入房间响应
   const listener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
-
     if (msg.action === "joinedRoom") {
-      // 成功加入房间
       ws.value?.removeEventListener("message", listener);
-      router.push({
-        path: "/game/ol/play",
-        query: { creator: creator.value, roomId: id },
-      });
+      joinToken.value = ""; // 使用后清除
+      router.push({ path: "/game/ol/play", query: { roomId: id } });
     } else if (msg.action === "error") {
-      // 加入房间失败
       const errorMsg = msg.payload;
       if (errorMsg.includes("密码错误")) {
         joinError.value = "房间密码错误，请重新输入";
         showJoinPassword.value = true;
-      } else if (errorMsg.includes("房间不存在")) {
-        joinError.value = "房间不存在，请检查房间ID";
+      } else if (errorMsg.includes("token无效")) {
+        joinError.value = "token 无效或已使用，请重新获取房间";
       } else {
         joinError.value = errorMsg;
       }
@@ -502,8 +452,6 @@ function handleJoinRoom() {
   };
 
   ws.value.addEventListener("message", listener);
-
-  // 直接发送加入房间请求
   ws.value.send(
     JSON.stringify({
       action: "joinRoom",
@@ -511,6 +459,7 @@ function handleJoinRoom() {
         roomId: id,
         user: creator.value,
         password: joinRoomPassword.value || "",
+        joinToken: joinToken.value,
       },
     })
   );

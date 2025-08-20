@@ -1,16 +1,18 @@
 <template>
   <div class="topbar">
     <v-app-bar :elevation="0" color="transparent" height="60">
+      <!-- 小屏：汉堡菜单按钮 -->
+      <v-app-bar-nav-icon v-if="isSmallScreen" @click.stop="drawer = !drawer" />
+
+      <!-- LOGO 永远在左侧 -->
       <div class="logo">
         <a href="/">
-          <!-- 白色 logo，深色模式显示 -->
           <img
             v-show="isDarkMode"
             class="site-logo light"
             :src="logoWhite"
             alt="logo"
           />
-          <!-- 黑色 logo，浅色模式显示 -->
           <img
             v-show="!isDarkMode"
             class="site-logo dark"
@@ -19,38 +21,101 @@
           />
         </a>
       </div>
+
+      <!-- 推到右侧 -->
+      <v-spacer />
+
+      <!-- 右侧区域：导航 + 头像 -->
       <template v-slot:append>
-        <v-btn icon="mdi-home" to="/"></v-btn>
-        <v-btn icon="mdi-cog" to="/setting"></v-btn>
-        <v-btn icon="mdi-book" to="/doc"></v-btn>
-        <!-- 主题切换下拉 -->
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" icon>
-              <v-icon>mdi-theme-light-dark</v-icon>
-            </v-btn>
-          </template>
-          <v-list>
-            <v-list-item @click="setTheme('light')">
-              <v-list-item-title>浅色模式</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="setTheme('dark')">
-              <v-list-item-title>深色模式</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="setTheme('system')">
-              <v-list-item-title>跟随系统</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+        <div class="d-flex align-center" id="option">
+          <!-- 大屏导航按钮 -->
+          <div v-if="!isSmallScreen" class="d-flex align-center">
+            <v-btn text="首页" to="/" class="text-btn"></v-btn>
+            <v-btn text="设置" to="/setting" class="text-btn"></v-btn>
+            <v-btn text="文档" to="/doc" class="text-btn"></v-btn>
+            <v-menu>
+              <template v-slot:activator="{ props }">
+                <v-btn v-bind="props" class="text-btn"> 主题 </v-btn>
+              </template>
+              <v-list>
+                <v-list-item @click="setTheme('light')"
+                  ><v-list-item-title>浅色模式</v-list-item-title></v-list-item
+                >
+                <v-list-item @click="setTheme('dark')"
+                  ><v-list-item-title>深色模式</v-list-item-title></v-list-item
+                >
+                <v-list-item @click="setTheme('system')"
+                  ><v-list-item-title>跟随系统</v-list-item-title></v-list-item
+                >
+              </v-list>
+            </v-menu>
+          </div>
+
+          <!-- 右侧头像
+          <v-avatar size="32" class="ml-3">
+            <img :src="avatar" alt="User Avatar" />
+          </v-avatar> -->
+        </div>
       </template>
     </v-app-bar>
+
+    <!-- 小屏抽屉菜单 -->
+    <v-navigation-drawer v-model="drawer" location="left" temporary>
+      <v-list>
+        <v-list-item to="/" title="首页"></v-list-item>
+        <v-list-item to="/setting" title="设置"></v-list-item>
+        <v-list-item to="/doc" title="文档"></v-list-item>
+        <v-divider></v-divider>
+        <br />
+        <p style="margin-left: 16px; font-size: 13px">主题设置</p>
+        <v-list-item @click="setTheme('light')" title="浅色模式"></v-list-item>
+        <v-list-item @click="setTheme('dark')" title="深色模式"></v-list-item>
+        <v-list-item @click="setTheme('system')" title="跟随系统"></v-list-item>
+      </v-list>
+    </v-navigation-drawer>
   </div>
 </template>
 
+<script setup>
+import { ref, onMounted, watch, computed } from "vue";
+import { useTheme, useDisplay } from "vuetify";
+import logoWhite from "@/assets/image/logo_white.png";
+import logoBlack from "@/assets/image/logo_black.png";
+import avatar from "@/assets/image/avatar.png";
+
+const theme = useTheme();
+const { width } = useDisplay();
+const drawer = ref(false);
+
+onMounted(() => {
+  const saved = localStorage.getItem("themeMode");
+  if (saved === "light" || saved === "dark" || saved === "system") {
+    theme.change(saved);
+  }
+});
+
+function setTheme(mode) {
+  theme.change(mode);
+  localStorage.setItem("themeMode", mode);
+}
+
+const isDarkMode = ref(theme.global.current.value.dark);
+watch(
+  () => theme.global.current.value,
+  (val) => {
+    isDarkMode.value = val.dark;
+  },
+  { deep: true, immediate: true }
+);
+
+const isSmallScreen = computed(() => width.value < 960);
+</script>
+
 <style scoped>
 .v-toolbar {
-  position: relative; /* 为伪元素定位 */
-  z-index: 1; /* 确保文字在上层 */
+  position: relative;
+  z-index: 1;
+  padding-right: 10px;
 }
 
 .v-toolbar::before {
@@ -60,56 +125,20 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: transparent; /* 不改变颜色 */
-  backdrop-filter: blur(50px); /* 模糊背景 */
-  -webkit-backdrop-filter: blur(50px); /* Safari 支持 */
-  z-index: -1; /* 放在文字下面 */
-}
-</style>
-
-<script setup>
-import { onMounted, ref, watch } from "vue";
-import { useTheme } from "vuetify";
-
-// **模块导入 logo**
-import logoWhite from "@/assets/image/logo_white.png";
-import logoBlack from "@/assets/image/logo_black.png";
-
-const theme = useTheme();
-
-// 初始化主题
-onMounted(() => {
-  const saved = localStorage.getItem("themeMode");
-  if (saved === "light" || saved === "dark" || saved === "system") {
-    theme.change(saved);
-  }
-});
-
-// 切换主题
-function setTheme(mode) {
-  theme.change(mode);
-  localStorage.setItem("themeMode", mode);
+  background-color: transparent;
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  z-index: -1;
 }
 
-// 是否为深色模式
-const isDarkMode = ref(theme.global.current.value.dark);
+#option {
+  padding-right: 20px;
+}
 
-// 监听 theme 变化（包括系统模式）
-watch(
-  () => theme.global.current.value,
-  (val) => {
-    isDarkMode.value = val.dark;
-  },
-  { deep: true, immediate: true }
-);
-</script>
-
-<style scoped>
 .site-logo {
   height: 15px;
 }
 
-/* 浅色模式 logo 放大 15% */
 .site-logo.dark {
   transform: scale(1.15);
   transform-origin: left center;
@@ -117,5 +146,10 @@ watch(
 
 .logo {
   padding-left: 20px;
+}
+
+.text-btn {
+  margin: 0 8px;
+  font-family: "Microsoft YaHei", sans-serif;
 }
 </style>

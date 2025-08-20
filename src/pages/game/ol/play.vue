@@ -1,62 +1,6 @@
 <template>
   <v-app>
     <v-main>
-      <!-- <v-container class="py-6" max-width="900px"> -->
-      <!-- <v-card elevation="8" class="rounded-lg"> -->
-      <!-- <v-card-title class="text-h5 font-weight-bold primary white--text"> -->
-      <!-- <v-icon left class="mr-2">mdi-chess-king</v-icon>
-          房间: {{ roomId }} -->
-      <!-- <v-spacer></v-spacer> -->
-      <!-- </v-card-title> -->
-      <!-- <v-card-subtitle class="py-3 grey lighten-4">
-          <v-row no-gutters align="center"> -->
-      <!-- <v-col cols="12" md="6">
-              <div class="d-flex align-center mb-2">
-                <v-icon color="primary" class="mr-2">mdi-account-group</v-icon>
-                <span class="text-subtitle-1 font-weight-medium">玩家</span>
-              </div>
-              <v-chip-group>
-                <v-chip
-                  v-for="player in currentRoom.players"
-                  :key="player"
-                  color="success"
-                  text-color="white"
-                  small
-                  class="ma-1"
-                >
-                  <v-avatar left size="20" class="mr-1">
-                    <v-icon small>mdi-account</v-icon>
-                  </v-avatar>
-                  {{ player }}
-                </v-chip>
-              </v-chip-group>
-            </v-col>
-            <v-col cols="12" md="6">
-              <div class="d-flex align-center mb-2">
-                <v-icon color="info" class="mr-2">mdi-eye</v-icon>
-                <span class="text-subtitle-1 font-weight-medium">观众</span>
-              </div>
-              <v-chip-group>
-                <v-chip
-                  v-for="spectator in currentRoom.spectators"
-                  :key="spectator"
-                  color="info"
-                  text-color="white"
-                  small
-                  class="ma-1"
-                >
-                  <v-avatar left size="20" class="mr-1">
-                    <v-icon small>mdi-eye-outline</v-icon>
-                  </v-avatar>
-                  {{ spectator }}
-                </v-chip>
-              </v-chip-group>
-            </v-col> -->
-      <!-- </v-row>
-        </v-card-subtitle> -->
-
-      <v-divider></v-divider>
-
       <v-card-text>
         <v-row>
           <v-col cols="12" md="8">
@@ -197,7 +141,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ws, fetchRoomList } from "@/services/wsClient";
+import { ws } from "@/services/wsClient";
 
 interface Room {
   id: string;
@@ -216,6 +160,7 @@ const route = useRoute();
 const router = useRouter();
 const creator = (route.query.creator as string) || "";
 const roomId = (route.query.roomId as string) || "";
+const joinToken = (route.query.joinToken as string) || ""; // 从URL或前端内存传入一次性token
 
 const currentRoom = ref<Room>({
   id: roomId,
@@ -232,13 +177,13 @@ let roomListInterval: number | null = null;
 
 // 格式化时间
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString("zh-CN", {
+  return new Date(date).toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
-// 计算属性用于房间状态显示
+// 计算房间状态
 const roomStatusColor = computed(() => {
   switch (currentRoom.value.roomStatus) {
     case "waiting":
@@ -251,7 +196,6 @@ const roomStatusColor = computed(() => {
       return "blue-grey";
   }
 });
-
 const roomStatusText = computed(() => {
   switch (currentRoom.value.roomStatus) {
     case "waiting":
@@ -264,7 +208,6 @@ const roomStatusText = computed(() => {
       return "未知";
   }
 });
-
 const roomStatusIcon = computed(() => {
   switch (currentRoom.value.roomStatus) {
     case "waiting":
@@ -291,8 +234,8 @@ function handleWSMessage(msg: any) {
           spectators: payload.spectators,
           roomStatus: payload.roomStatus,
         };
-        messages.value = (payload.messages || []).map((msg: any) => ({
-          ...msg,
+        messages.value = (payload.messages || []).map((m: any) => ({
+          ...m,
           timestamp: new Date(),
         }));
       }
@@ -309,10 +252,7 @@ function handleWSMessage(msg: any) {
       refreshing.value = false;
       break;
     case "newMessage":
-      messages.value.push({
-        ...payload,
-        timestamp: new Date(),
-      });
+      messages.value.push({ ...payload, timestamp: new Date() });
       scrollToBottom();
       break;
     case "roomClosed":
@@ -328,27 +268,16 @@ function handleWSMessage(msg: any) {
 // ---------------- 房间信息 ----------------
 function refreshRoomInfo() {
   if (!ws.value) return;
-
   refreshing.value = true;
-  ws.value.send(
-    JSON.stringify({
-      action: "getRoomInfo",
-      payload: { roomId },
-    })
-  );
-
-  // 2秒后自动关闭加载状态
-  setTimeout(() => {
-    refreshing.value = false;
-  }, 2000);
+  ws.value.send(JSON.stringify({ action: "getRoomInfo", payload: { roomId } }));
+  setTimeout(() => (refreshing.value = false), 2000);
 }
 
 // ---------------- 聊天 ----------------
 function scrollToBottom() {
   nextTick(() => {
-    if (chatContainer.value) {
+    if (chatContainer.value)
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-    }
   });
 }
 
@@ -360,17 +289,14 @@ function sendMessage() {
       payload: { roomId, playerName: creator, message: chatInput.value },
     })
   );
-
   chatInput.value = "";
   scrollToBottom();
 }
 
+// ---------------- 离开 ----------------
 function leaveRoom() {
   ws.value?.send(
-    JSON.stringify({
-      action: "leaveRoom",
-      payload: { roomId, user: creator },
-    })
+    JSON.stringify({ action: "leaveRoom", payload: { roomId, user: creator } })
   );
   router.push({ path: "/game/ol" });
 }
@@ -382,24 +308,32 @@ onMounted(() => {
     handleWSMessage(msg);
   });
 
-  roomListInterval = window.setInterval(fetchRoomList, 5000);
+  roomListInterval = window.setInterval(() => {
+    // 可以周期性刷新房间信息
+    ws.value?.send(
+      JSON.stringify({ action: "getRoomInfo", payload: { roomId } })
+    );
+  }, 5000);
 
   if (roomId && creator) {
-    // 根据URL参数判断是否是创建房间的用户
     const isCreator = route.query.isCreator === "true";
 
     if (isCreator) {
-      // 创建者不需要发送joinRoom，直接等待roomCreated消息
-      // 服务器会自动推送房间信息
+      // 创建者直接等待房间信息
       console.log("创建者进入房间，等待服务器推送房间信息");
     } else {
-      // 加入者需要发送joinRoom请求
-      ws.value?.send(
-        JSON.stringify({
-          action: "joinRoom",
-          payload: { roomId, user: creator, password: "" },
-        })
-      );
+      // 加入者必须用一次性token
+      if (!joinToken) {
+        alert("加入房间失败：token缺失或已使用");
+        router.push({ path: "/game/ol" });
+      } else {
+        ws.value?.send(
+          JSON.stringify({
+            action: "joinRoom",
+            payload: { roomId, user: creator, password: "", joinToken },
+          })
+        );
+      }
     }
   }
 });
