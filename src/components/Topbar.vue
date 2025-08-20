@@ -1,6 +1,11 @@
 <template>
   <div class="topbar">
-    <v-app-bar :elevation="0" color="transparent" height="60">
+    <v-app-bar
+      :elevation="0"
+      color="transparent"
+      height="60"
+      scroll-behavior="fully-hide"
+    >
       <!-- 小屏：汉堡菜单按钮 -->
       <v-app-bar-nav-icon v-if="isSmallScreen" @click.stop="drawer = !drawer" />
 
