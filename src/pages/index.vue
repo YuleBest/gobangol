@@ -2,12 +2,19 @@
   <Topbar />
   <div class="main">
     <div class="welcome-section">
-      <h1 class="welcome-title">Discover the</h1>
-      <h1 class="welcome-title">Magic of Gobang</h1>
-      <p class="welcome-subtitle">
-        放松心情，开启五子棋之旅！与好友或对手轻松对弈，Gobang OL
-        让每一步都充满乐趣！
-      </p>
+      <div class="hero">
+        <div class="hero-content">
+          <h1 class="welcome-title">Discover the</h1>
+          <h1 class="welcome-title">Magic of Gobang</h1>
+          <p class="welcome-subtitle">
+            放松心情，开启五子棋之旅！与好友或对手轻松对弈，Gobang OL
+            让每一步都充满乐趣！
+          </p>
+        </div>
+        <div class="hero-image">
+          <img :src="isDarkMode ? bg_white : bg_black" alt="Gobang" />
+        </div>
+      </div>
     </div>
 
     <div class="game-section">
@@ -48,6 +55,9 @@
 import router from "@/router";
 import { ref, onMounted, watch } from "vue";
 import { useTheme } from "vuetify";
+import bg_black from "@/assets/image/bg_black.png";
+import bg_white from "@/assets/image/bg_white.png";
+
 const theme = useTheme();
 const isDarkMode = ref(theme.global.current.value.dark);
 
@@ -109,7 +119,7 @@ const gameCards = [
 
 .welcome-section {
   height: 50vh;
-  width: 100vw;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -126,6 +136,65 @@ const gameCards = [
 .welcome-section p {
   padding-top: 8px;
   font-size: 16px;
+}
+
+.hero {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-image {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.hero-image img {
+  height: 75%;
+  width: 75%;
+
+  /* 四边淡出过渡加宽 */
+  -webkit-mask-image: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.25) 30%,
+      rgba(0, 0, 0, 1) 90%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.25) 30%,
+      rgba(0, 0, 0, 1) 80%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  -webkit-mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: cover;
+
+  mask-image: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.25) 30%,
+      rgba(0, 0, 0, 1) 90%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.25) 30%,
+      rgba(0, 0, 0, 1) 80%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  mask-composite: intersect;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: cover;
 }
 
 .game-card {
@@ -239,6 +308,19 @@ const gameCards = [
     font-size: 14px;
     word-wrap: break-word;
     text-align: center;
+  }
+
+  .hero {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-image {
+    display: none;
   }
 }
 </style>
