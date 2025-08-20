@@ -82,9 +82,10 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useTheme, useDisplay } from "vuetify";
 import logoWhite from "@/assets/image/logo_white.png";
 import logoBlack from "@/assets/image/logo_black.png";
-import avatar from "@/assets/image/avatar.png";
+// import avatar from "@/assets/image/avatar.png";
 
 const theme = useTheme();
+``;
 const { width } = useDisplay();
 const drawer = ref(false);
 
@@ -113,10 +114,20 @@ const isSmallScreen = computed(() => width.value < 960);
 </script>
 
 <style scoped>
+.v-btn {
+  font-family: "Mona Sans", Arial, sans-serif !important;
+  font-weight: 400 !important;
+}
+
 .v-toolbar {
   position: relative;
   z-index: 1;
   padding-right: 10px;
+}
+
+.v-navigation-drawer {
+  background-color: var(--footer-bg-color);
+  backdrop-filter: blur(50px);
 }
 
 .v-toolbar::before {
@@ -137,13 +148,14 @@ const isSmallScreen = computed(() => width.value < 960);
 }
 
 .site-logo {
-  height: 15px;
+  height: 20px;
+  margin-top: 5px;
 }
 
-.site-logo.dark {
+/* .site-logo.dark {
   transform: scale(1.15);
   transform-origin: left center;
-}
+} */
 
 .logo {
   padding-left: 20px;

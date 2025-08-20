@@ -13,6 +13,7 @@ declare module 'vue' {
     Footer: typeof import('./components/Footer.vue')['default']
     GameBodyPVE: typeof import('./components/GameBodyPVE.vue')['default']
     GameBodyPVP: typeof import('./components/GameBodyPVP.vue')['default']
+    NavButton: typeof import('./components/NavButton.vue')['default']
     Progress: typeof import('./components/Progress.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

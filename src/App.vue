@@ -6,13 +6,6 @@
   </v-app>
 </template>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const script = document.createElement("script");
-  script.src = "//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
-  script.async = true;
-  document.body.appendChild(script);
-});
-</script>
+<script></script>
 
 <style></style>

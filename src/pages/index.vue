@@ -118,7 +118,7 @@ const gameCards = [
 }
 
 .welcome-section h1 {
-  font-stretch: expanded;
+  font-family: "Mona Sans EX";
   line-height: 1.2;
   font-size: 50px;
 }

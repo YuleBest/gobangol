@@ -15,9 +15,9 @@ body {
 }
 
 @font-face {
-  font-family: "Mona Sans";
+  font-family: "Mona Sans EX";
   src: url("/fonts/Mona-Sans-Expanded.woff2") format("woff2");
-  font-weight: expanded;
+  font-weight: normal;
   font-style: normal;
   font-display: swap;
   -webkit-font-smoothing: antialiased;
@@ -34,8 +34,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  font-family: "Mona Sans", Arial, sans-serif;
+#app,
+body,
+html {
+  font-family: "Mona Sans", Arial, sans-serif !important;
+  font-weight: 400 !important;
 }
 
 code {

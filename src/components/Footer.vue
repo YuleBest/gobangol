@@ -5,9 +5,14 @@
     style="line-height: 0.5"
   >
     <div>
-      本站总访问量 <span id="busuanzi_container_site_pv">加载中...</span>
+      Copyright &copy; {{ new Date().getFullYear() }}
+      <strong
+        ><a href="https://github.com/YuleBest" target="_blank"
+          >于乐Yule</a
+        ></strong
+      >
+      All right reserved.
     </div>
-
     <div class="medal">
       <!-- Vue 勋章 -->
       <a href="https://vuejs.org" title="Vue 勋章" target="_blank">
@@ -61,15 +66,6 @@
         <img :src="cloudflare" style="height: 25px" loading="lazy" />
       </a>
     </div>
-    <div>
-      Copyright &copy; {{ new Date().getFullYear() }}
-      <strong
-        ><a href="https://github.com/YuleBest" target="_blank"
-          >于乐Yule</a
-        ></strong
-      >
-      All right reserved.
-    </div>
 
     <div class="end">
       <!-- 版权信息© -->
@@ -104,6 +100,10 @@ import nodejs from "@/assets/image/Node.js.png";
 </script>
 
 <style scoped>
+.v-footer {
+  background-color: var(--footer-bg-color);
+}
+
 * {
   font-size: 12px;
 }
