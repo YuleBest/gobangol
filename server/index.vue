@@ -357,9 +357,9 @@ function handleCreateRoom() {
 
   const listener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
-    console.log("创建房间收到消息:", msg);
+    console.log('创建房间收到消息:', msg);
     if (msg.action === "roomCreated" && msg.payload.creator === creator.value) {
-      console.log("房间创建成功，收到token:", msg.payload.joinToken);
+      console.log('房间创建成功，收到token:', msg.payload.joinToken);
       joinToken.value = msg.payload.joinToken; // 保存 token
       const roomId = msg.payload.id;
       ws.value?.removeEventListener("message", listener);
@@ -381,45 +381,45 @@ function handleCreateRoom() {
 
 // ---------------- 请求临时 token 并加入房间 ----------------
 function requestTokenAndJoin(roomId: string) {
-  console.log("开始请求token，房间ID:", roomId, "用户:", creator.value);
-
+  console.log('开始请求token，房间ID:', roomId, '用户:', creator.value);
+  
   // 保存房间ID，无论是否有昵称都先请求token
   joinRoomId.value = roomId;
-
+  
   if (!creator.value) {
-    console.log("用户昵称为空，跳转到加入房间页面填写昵称");
+    console.log('用户昵称为空，跳转到加入房间页面填写昵称');
     currentStep.value = "join";
     return;
   }
 
   const nicknameValidation = validateNickname(creator.value);
   if (nicknameValidation !== true) {
-    console.log("昵称验证失败:", nicknameValidation);
+    console.log('昵称验证失败:', nicknameValidation);
     currentStep.value = "join";
     return;
   }
 
   if (!ws.value || ws.value.readyState !== 1) {
-    console.error("WebSocket未连接，状态:", ws.value?.readyState);
+    console.error('WebSocket未连接，状态:', ws.value?.readyState);
     return alert("WebSocket 尚未连接，请稍等...");
   }
 
   const tokenListener = (event: MessageEvent) => {
-    console.log("收到WebSocket消息:", event.data);
+    console.log('收到WebSocket消息:', event.data);
     const msg = JSON.parse(event.data);
-    console.log("解析后的消息:", msg);
-
+    console.log('解析后的消息:', msg);
+    
     if (msg.action === "roomCreated" && msg.payload.joinToken) {
-      console.log("收到token:", msg.payload.joinToken);
+      console.log('收到token:', msg.payload.joinToken);
       joinToken.value = msg.payload.joinToken;
       ws.value?.removeEventListener("message", tokenListener);
       handleJoinRoom();
     } else if (msg.action === "error") {
-      console.error("收到错误消息:", msg.payload);
+      console.error('收到错误消息:', msg.payload);
       alert(msg.payload);
       ws.value?.removeEventListener("message", tokenListener);
     } else {
-      console.log("收到其他类型消息:", msg.action, msg.payload);
+      console.log('收到其他类型消息:', msg.action, msg.payload);
     }
   };
 
@@ -449,23 +449,23 @@ function handleJoinRoom() {
 
   // 如果没有token，先请求token
   if (!joinToken.value) {
-    console.log("token不存在，先请求token...");
+    console.log('token不存在，先请求token...');
     requestTokenAndJoin(id);
     return;
   }
 
   const listener = (event: MessageEvent) => {
-    console.log("加入房间收到消息:", event.data);
+    console.log('加入房间收到消息:', event.data);
     const msg = JSON.parse(event.data);
-    console.log("加入房间消息解析:", msg);
-
+    console.log('加入房间消息解析:', msg);
+    
     if (msg.action === "joinedRoom") {
-      console.log("成功加入房间");
+      console.log('成功加入房间');
       ws.value?.removeEventListener("message", listener);
       joinToken.value = ""; // 使用后清除
       router.push({ path: "/game/ol/play-copy", query: { roomId: id } });
     } else if (msg.action === "error") {
-      console.error("加入房间失败:", msg.payload);
+      console.error('加入房间失败:', msg.payload);
       const errorMsg = msg.payload;
       if (errorMsg.includes("密码错误")) {
         joinError.value = "房间密码错误，请重新输入";
@@ -479,12 +479,12 @@ function handleJoinRoom() {
   };
 
   ws.value.addEventListener("message", listener);
-  console.log("发送加入房间请求:", {
+  console.log('发送加入房间请求:', {
     action: "joinRoom",
     roomId: id,
     user: creator.value,
     password: joinRoomPassword.value,
-    joinToken: joinToken.value,
+    joinToken: joinToken.value
   });
   ws.value.send(
     JSON.stringify({

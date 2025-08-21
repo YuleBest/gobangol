@@ -117,6 +117,7 @@ const gameCards = [
   min-height: calc(100vh - 60px);
 }
 
+/* 欢迎区域 */
 .welcome-section {
   height: 50vh;
   width: 100%;
@@ -138,6 +139,7 @@ const gameCards = [
   font-size: 16px;
 }
 
+/* hero 标题 */
 .hero {
   height: 100%;
   width: 100%;
@@ -147,6 +149,7 @@ const gameCards = [
   align-items: center;
 }
 
+/* hero 图（assets/bg） */
 .hero-image {
   display: flex;
   flex-direction: row;
@@ -197,6 +200,7 @@ const gameCards = [
   mask-size: cover;
 }
 
+/* 游戏卡片 */
 .game-card {
   position: relative;
   border: 1.5px solid;
@@ -276,6 +280,7 @@ const gameCards = [
   min-height: 0;
 }
 
+/* 响应式 */
 @media (max-width: 768px) {
   .main {
     margin: 0 20px 40px 20px;
