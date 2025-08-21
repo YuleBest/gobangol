@@ -29,7 +29,6 @@ declare module 'vue-router/auto-routes' {
     '/doc/swap': RouteRecordInfo<'/doc/swap', '/doc/swap', Record<never, never>, Record<never, never>>,
     '/doc/update': RouteRecordInfo<'/doc/update', '/doc/update', Record<never, never>, Record<never, never>>,
     '/game/ol/': RouteRecordInfo<'/game/ol/', '/game/ol', Record<never, never>, Record<never, never>>,
-    '/game/ol/play': RouteRecordInfo<'/game/ol/play', '/game/ol/play', Record<never, never>, Record<never, never>>,
     '/game/ol/play-copy': RouteRecordInfo<'/game/ol/play-copy', '/game/ol/play-copy', Record<never, never>, Record<never, never>>,
     '/game/pve/': RouteRecordInfo<'/game/pve/', '/game/pve', Record<never, never>, Record<never, never>>,
     '/game/pve/play': RouteRecordInfo<'/game/pve/play', '/game/pve/play', Record<never, never>, Record<never, never>>,

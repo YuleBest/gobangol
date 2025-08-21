@@ -1,7 +1,7 @@
 <template>
   <div class="main">
     <div class="progress">
-      <v-progress-circular color="green" indeterminate></v-progress-circular>
+      <v-progress-circular indeterminate></v-progress-circular>
     </div>
     <div class="text">连接服务器中...</div>
   </div>

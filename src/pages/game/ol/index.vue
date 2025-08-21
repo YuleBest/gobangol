@@ -18,7 +18,7 @@
       persistent
     >
       <v-card class="pa-8 text-center" max-width="400">
-        <v-icon color="error" size="64" class="mb-4">mdi-alert-circle</v-icon>
+        <v-icon size="64" class="mb-4">mdi-alert-circle</v-icon>
         <h2 class="mb-4">连接失败</h2>
         <p class="mb-6">服务器连接失败，请稍后再试</p>
         <v-btn to="/">回到主页</v-btn>
@@ -34,23 +34,13 @@
           <div v-if="currentStep === 'initial'" class="text-center">
             <v-row class="my-4">
               <v-col cols="12" md="6">
-                <v-btn
-                  color="primary"
-                  size="large"
-                  @click="startCreateRoom"
-                  block
-                >
+                <v-btn size="large" @click="startCreateRoom" block>
                   <v-icon left>mdi-plus</v-icon>
                   创建房间
                 </v-btn>
               </v-col>
               <v-col cols="12" md="6">
-                <v-btn
-                  color="success"
-                  size="large"
-                  @click="startJoinRoom"
-                  block
-                >
+                <v-btn size="large" @click="startJoinRoom" block>
                   <v-icon left>mdi-login</v-icon>
                   加入房间
                 </v-btn>
@@ -64,7 +54,6 @@
                   <div class="d-flex justify-space-between align-center mb-4">
                     <h3 class="text-h6">公开房间列表</h3>
                     <v-btn
-                      color="primary"
                       variant="text"
                       size="small"
                       @click="getRoomList"
@@ -76,9 +65,7 @@
                   </div>
 
                   <div v-if="roomList.length === 0" class="text-center py-4">
-                    <v-icon color="grey" size="48" class="mb-2"
-                      >mdi-home-search</v-icon
-                    >
+                    <v-icon size="48" class="mb-2">mdi-home-search</v-icon>
                     <p class="text-grey">暂无公开房间</p>
                   </div>
 
@@ -90,7 +77,7 @@
                       border
                     >
                       <template v-slot:prepend>
-                        <v-icon color="primary">mdi-home</v-icon>
+                        <v-icon>mdi-home</v-icon>
                       </template>
 
                       <v-list-item-title>
@@ -103,12 +90,7 @@
                         <div>观众: {{ room.spectators.length }}</div>
                         <div>
                           状态:
-                          <v-chip
-                            size="x-small"
-                            :color="
-                              room.roomStatus === 'waiting' ? 'success' : 'info'
-                            "
-                          >
+                          <v-chip size="x-small">
                             {{
                               room.roomStatus === "waiting"
                                 ? "等待中"
@@ -120,7 +102,6 @@
 
                       <template v-slot:append>
                         <v-btn
-                          color="success"
                           variant="outlined"
                           size="small"
                           @click="requestTokenAndJoin(room.id)"
@@ -166,11 +147,8 @@
                 />
               </v-col>
               <v-col cols="12" class="d-flex justify-space-between">
-                <v-btn color="grey" @click="backToInitial">返回</v-btn>
-                <v-btn
-                  color="primary"
-                  @click="handleCreateRoom"
-                  :disabled="!creator"
+                <v-btn @click="backToInitial">返回</v-btn>
+                <v-btn @click="handleCreateRoom" :disabled="!creator"
                   >创建房间</v-btn
                 >
               </v-col>
@@ -224,7 +202,6 @@
               <v-col cols="12" class="d-flex justify-space-between">
                 <v-btn color="grey" @click="backToInitial">返回</v-btn>
                 <v-btn
-                  color="success"
                   @click="requestTokenAndJoin(joinRoomId.trim())"
                   :disabled="
                     !creator ||
@@ -363,7 +340,7 @@ function handleCreateRoom() {
       const token = msg.payload.token;
       ws.value?.removeEventListener("message", listener);
       router.push({
-        path: "/game/ol/play-copy",
+        path: "/game/ol/play",
         query: { token }, // 只传递token
       });
     }
@@ -413,7 +390,7 @@ function requestTokenAndJoin(roomId: string) {
       const token = msg.payload.token;
       ws.value?.removeEventListener("message", tokenListener);
       router.push({
-        path: "/game/ol/play-copy",
+        path: "/game/ol/play",
         query: { token }, // 只传递token
       });
     } else if (msg.action === "error") {
