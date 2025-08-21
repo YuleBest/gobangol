@@ -1,4 +1,5 @@
 <template>
+  <Topbar />
   <v-app>
     <!-- 全屏加载遮罩 -->
     <v-overlay
@@ -218,6 +219,7 @@
       </v-container>
     </v-main>
   </v-app>
+  <Footer />
 </template>
 
 <script setup lang="ts">

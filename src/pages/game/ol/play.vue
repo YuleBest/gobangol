@@ -480,7 +480,7 @@ function leaveRoom() {
 
 // ---------------- 生命周期 ----------------
 onMounted(async () => {
-  console.log("play-copy页面加载，token:", token.value);
+  console.log("play页面加载，token:", token.value);
 
   if (!token.value) {
     alert("Token缺失，请重新加入房间");
