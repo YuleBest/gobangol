@@ -25,7 +25,13 @@
     <div class="chat">
       <v-divider thickness="1"></v-divider>
 
-      <div class="chat-messages">
+      <div class="chat-messages" ref="chatContainer">
+        <div
+          v-if="messages.length === 0"
+          class="no-messages text-center grey--text"
+        >
+          暂无消息
+        </div>
         <div
           v-for="(msg, idx) in messages"
           :key="idx"
@@ -33,23 +39,12 @@
           :class="{ 'my-message': msg.playerName === creator }"
         >
           <div class="message-bubble">
-            <div class="message-avatar">
-              <v-avatar
-                size="32"
-                :color="msg.playerName === creator ? 'success' : 'primary'"
-                class="elevation-1"
-              >
-                <span class="white--text text-caption font-weight-bold">
-                  {{ msg.playerName.charAt(0).toUpperCase() }}
-                </span>
-              </v-avatar>
-            </div>
             <div class="message-content">
               <div class="message-header">
-                <span class="message-sender font-weight-medium">
+                <span class="message-sender font-weight-bold">
                   {{ msg.playerName }}
                 </span>
-                <span class="message-time text-caption grey--text">
+                <span class="message-time text-caption">
                   {{ formatTime(msg.timestamp || new Date()) }}
                 </span>
               </div>
@@ -165,6 +160,71 @@
 
   .chat-messages {
     flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+
+  .message-wrapper {
+    margin-bottom: 12px;
+
+    &.my-message {
+      text-align: right;
+    }
+  }
+
+  .message-bubble {
+    display: inline-block;
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin: 2px 0;
+  }
+
+  .message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .message-sender {
+    color: #1976d2;
+    font-weight: 600;
+  }
+
+  .message-time {
+    color: #666;
+    font-size: 11px;
+  }
+
+  .message-text {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+
+  .my-message {
+    .message-bubble {
+      background-color: #e3f2fd;
+      border: 1px solid #bbdefb;
+    }
+
+    .message-sender {
+      color: #2e7d32;
+    }
+  }
+
+  .message-wrapper:not(.my-message) .message-bubble {
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+  }
+
+  .no-messages {
+    padding: 20px;
+    color: #999;
+    font-style: italic;
   }
 }
 
@@ -191,7 +251,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ws } from "@/services/wsClient";
+import { ws, connectWS } from "@/services/wsClient";
 
 interface Room {
   id: string;
@@ -208,12 +268,12 @@ interface Message {
 
 const route = useRoute();
 const router = useRouter();
-const creator = (route.query.creator as string) || "";
-const roomId = (route.query.roomId as string) || "";
-const joinToken = (route.query.joinToken as string) || ""; // 从URL或前端内存传入一次性token
+const token = ref((route.query.token as string) || "");
 
+const roomId = ref("");
+const creator = ref("");
 const currentRoom = ref<Room>({
-  id: roomId,
+  id: "",
   players: [],
   spectators: [],
   roomStatus: "waiting",
@@ -258,67 +318,94 @@ const roomStatusText = computed(() => {
       return "未知";
   }
 });
-const roomStatusIcon = computed(() => {
-  switch (currentRoom.value.roomStatus) {
-    case "waiting":
-      return "mdi-clock-outline";
-    case "playing":
-      return "mdi-play-circle";
-    case "finished":
-      return "mdi-check-circle";
-    default:
-      return "mdi-help-circle";
-  }
-});
 
 // 复制房间ID
 function copyRoomId() {
-  const roomIdCode = document.querySelector("code");
-  if (roomIdCode) {
-    navigator.clipboard
-      .writeText(roomId)
-      .then(() => {
-        alert("房间ID已复制");
-      })
-      .catch((err) => {
-        console.error("复制失败：", err);
-        alert("复制失败，请手动复制");
-      });
-  }
+  navigator.clipboard
+    .writeText(roomId.value)
+    .then(() => {
+      alert("房间ID已复制");
+    })
+    .catch((err) => {
+      console.error("复制失败：", err);
+      alert("复制失败，请手动复制");
+    });
 }
+
+// 通过token查询房间信息
+const fetchRoomInfo = async () => {
+  try {
+    const response = await fetch(
+      `http://api.gobang.lh520.pw/getRoomByToken?token=${token.value}`
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || "Token无效或已使用");
+      router.push("/game/ol");
+      return false;
+    }
+
+    roomId.value = data.roomId;
+    creator.value = data.user;
+    return true;
+  } catch (error) {
+    console.error("获取房间信息失败:", error);
+    alert("获取房间信息失败，请返回重试");
+    router.push("/game/ol");
+    return false;
+  }
+};
+
 // ---------------- WS 消息处理 ----------------
 function handleWSMessage(msg: any) {
   const { action, payload } = msg;
   switch (action) {
     case "joinedRoom":
     case "roomCreated":
-      if (payload.id === roomId) {
+      if (payload.id === roomId.value || payload.roomId === roomId.value) {
         currentRoom.value = {
-          id: payload.id,
-          players: payload.players,
-          spectators: payload.spectators,
-          roomStatus: payload.roomStatus,
+          id: payload.id || payload.roomId,
+          players: payload.players || [],
+          spectators: payload.spectators || [],
+          roomStatus: payload.roomStatus || "waiting",
         };
         messages.value = (payload.messages || []).map((m: any) => ({
-          ...m,
+          playerName: m.playerName || m.sender || "未知用户",
+          message: m.message || m.content || "",
           timestamp: new Date(),
         }));
+        scrollToBottom();
       }
       break;
     case "roomUpdate":
-      currentRoom.value.players = payload.players;
-      currentRoom.value.spectators = payload.spectators;
-      currentRoom.value.roomStatus = payload.roomStatus;
+      currentRoom.value.players = payload.players || [];
+      currentRoom.value.spectators = payload.spectators || [];
+      currentRoom.value.roomStatus = payload.roomStatus || "waiting";
       break;
     case "roomInfo":
-      currentRoom.value.players = payload.players;
-      currentRoom.value.spectators = payload.spectators;
-      currentRoom.value.roomStatus = payload.roomStatus;
+      currentRoom.value.players = payload.players || [];
+      currentRoom.value.spectators = payload.spectators || [];
+      currentRoom.value.roomStatus = payload.roomStatus || "waiting";
+      messages.value = (payload.messages || []).map((m: any) => ({
+        playerName: m.playerName || m.sender || "未知用户",
+        message: m.message || m.content || "",
+        timestamp: new Date(),
+      }));
+      scrollToBottom();
       refreshing.value = false;
       break;
     case "newMessage":
-      messages.value.push({ ...payload, timestamp: new Date() });
-      scrollToBottom();
+      console.log("收到新消息:", payload);
+      // 确保消息是针对当前房间的
+      if (payload.roomId === roomId.value) {
+        messages.value.push({
+          playerName: payload.playerName || payload.sender || "未知用户",
+          message: payload.message || payload.content || "",
+          timestamp: new Date(),
+        });
+        scrollToBottom();
+      }
       break;
     case "roomClosed":
       alert("房间已被关闭");
@@ -334,7 +421,9 @@ function handleWSMessage(msg: any) {
 function refreshRoomInfo() {
   if (!ws.value) return;
   refreshing.value = true;
-  ws.value.send(JSON.stringify({ action: "getRoomInfo", payload: { roomId } }));
+  ws.value.send(
+    JSON.stringify({ action: "getRoomInfo", payload: { roomId: roomId.value } })
+  );
   setTimeout(() => (refreshing.value = false), 2000);
 }
 
@@ -351,7 +440,11 @@ function sendMessage() {
   ws.value?.send(
     JSON.stringify({
       action: "sendMessage",
-      payload: { roomId, playerName: creator, message: chatInput.value },
+      payload: {
+        roomId: roomId.value,
+        playerName: creator.value,
+        message: chatInput.value,
+      },
     })
   );
   chatInput.value = "";
@@ -361,46 +454,51 @@ function sendMessage() {
 // ---------------- 离开 ----------------
 function leaveRoom() {
   ws.value?.send(
-    JSON.stringify({ action: "leaveRoom", payload: { roomId, user: creator } })
+    JSON.stringify({
+      action: "leaveRoom",
+      payload: { roomId: roomId.value, user: creator.value },
+    })
   );
   router.push({ path: "/game/ol" });
 }
 
 // ---------------- 生命周期 ----------------
-onMounted(() => {
+onMounted(async () => {
+  console.log("play-copy页面加载，token:", token.value);
+
+  if (!token.value) {
+    alert("Token缺失，请重新加入房间");
+    router.push("/game/ol");
+    return;
+  }
+
+  const roomInfoLoaded = await fetchRoomInfo();
+  if (!roomInfoLoaded) return;
+
+  // 添加消息监听器
   ws.value?.addEventListener("message", (event) => {
     const msg = JSON.parse(event.data);
     handleWSMessage(msg);
   });
 
+  // 通过Token加入房间
+  ws.value?.send(
+    JSON.stringify({
+      action: "joinRoom",
+      payload: { token: token.value },
+    })
+  );
+
   roomListInterval = window.setInterval(() => {
-    // 可以周期性刷新房间信息
     ws.value?.send(
-      JSON.stringify({ action: "getRoomInfo", payload: { roomId } })
+      JSON.stringify({
+        action: "getRoomInfo",
+        payload: { roomId: roomId.value },
+      })
     );
   }, 5000);
 
-  if (roomId && creator) {
-    const isCreator = route.query.isCreator === "true";
-
-    if (isCreator) {
-      // 创建者直接等待房间信息
-      console.log("创建者进入房间，等待服务器推送房间信息");
-    } else {
-      // 加入者必须用一次性token
-      if (!joinToken) {
-        alert("加入房间失败：token缺失或已使用");
-        router.push({ path: "/game/ol" });
-      } else {
-        ws.value?.send(
-          JSON.stringify({
-            action: "joinRoom",
-            payload: { roomId, user: creator, password: "", joinToken },
-          })
-        );
-      }
-    }
-  }
+  console.log("已连接，等待服务器推送房间信息...");
 });
 
 onBeforeUnmount(() => {

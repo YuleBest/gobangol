@@ -225,7 +225,7 @@
                 <v-btn color="grey" @click="backToInitial">返回</v-btn>
                 <v-btn
                   color="success"
-                  @click="handleJoinRoom"
+                  @click="requestTokenAndJoin(joinRoomId.trim())"
                   :disabled="
                     !creator ||
                     !joinRoomId ||
@@ -358,14 +358,13 @@ function handleCreateRoom() {
   const listener = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
     console.log("创建房间收到消息:", msg);
-    if (msg.action === "roomCreated" && msg.payload.creator === creator.value) {
-      console.log("房间创建成功，收到token:", msg.payload.joinToken);
-      joinToken.value = msg.payload.joinToken; // 保存 token
-      const roomId = msg.payload.id;
+    if (msg.action === "roomCreated" && msg.payload.token) {
+      console.log("房间创建成功，收到token:", msg.payload.token);
+      const token = msg.payload.token;
       ws.value?.removeEventListener("message", listener);
       router.push({
         path: "/game/ol/play-copy",
-        query: { roomId }, // 不再放 token
+        query: { token }, // 只传递token
       });
     }
   };
@@ -409,11 +408,14 @@ function requestTokenAndJoin(roomId: string) {
     const msg = JSON.parse(event.data);
     console.log("解析后的消息:", msg);
 
-    if (msg.action === "roomCreated" && msg.payload.joinToken) {
-      console.log("收到token:", msg.payload.joinToken);
-      joinToken.value = msg.payload.joinToken;
+    if (msg.action === "joinToken" && msg.payload.token) {
+      console.log("收到加入token:", msg.payload.token);
+      const token = msg.payload.token;
       ws.value?.removeEventListener("message", tokenListener);
-      handleJoinRoom();
+      router.push({
+        path: "/game/ol/play-copy",
+        query: { token }, // 只传递token
+      });
     } else if (msg.action === "error") {
       console.error("收到错误消息:", msg.payload);
       alert(msg.payload);
@@ -427,75 +429,15 @@ function requestTokenAndJoin(roomId: string) {
 
   ws.value.send(
     JSON.stringify({
-      action: "requestToken",
-      payload: { roomId, user: creator.value },
-    })
-  );
-}
-
-// ---------------- 加入房间 ----------------
-function handleJoinRoom() {
-  const id = joinRoomId.value.trim();
-  if (!id) return alert("请输入房间ID");
-  if (showJoinPassword.value && !joinRoomPassword.value)
-    return alert("请输入房间密码");
-
-  if (!creator.value) return alert("请输入昵称");
-  const nicknameValidation = validateNickname(creator.value);
-  if (nicknameValidation !== true) return alert(nicknameValidation);
-
-  if (!ws.value || ws.value.readyState !== 1)
-    return alert("WebSocket 尚未连接，请稍等...");
-
-  // 如果没有token，先请求token
-  if (!joinToken.value) {
-    console.log("token不存在，先请求token...");
-    requestTokenAndJoin(id);
-    return;
-  }
-
-  const listener = (event: MessageEvent) => {
-    console.log("加入房间收到消息:", event.data);
-    const msg = JSON.parse(event.data);
-    console.log("加入房间消息解析:", msg);
-
-    if (msg.action === "joinedRoom") {
-      console.log("成功加入房间");
-      ws.value?.removeEventListener("message", listener);
-      joinToken.value = ""; // 使用后清除
-      router.push({ path: "/game/ol/play-copy", query: { roomId: id } });
-    } else if (msg.action === "error") {
-      console.error("加入房间失败:", msg.payload);
-      const errorMsg = msg.payload;
-      if (errorMsg.includes("密码错误")) {
-        joinError.value = "房间密码错误，请重新输入";
-        showJoinPassword.value = true;
-      } else if (errorMsg.includes("token无效")) {
-        joinError.value = "token 无效或已使用，请重新获取房间";
-      } else {
-        joinError.value = errorMsg;
-      }
-    }
-  };
-
-  ws.value.addEventListener("message", listener);
-  console.log("发送加入房间请求:", {
-    action: "joinRoom",
-    roomId: id,
-    user: creator.value,
-    password: joinRoomPassword.value,
-    joinToken: joinToken.value,
-  });
-  ws.value.send(
-    JSON.stringify({
-      action: "joinRoom",
+      action: "requestJoinToken",
       payload: {
-        roomId: id,
+        roomId,
         user: creator.value,
-        password: joinRoomPassword.value || "",
-        joinToken: joinToken.value,
+        password: joinRoomPassword.value,
       },
     })
   );
 }
+
+// 这个函数现在被requestTokenAndJoin替代，不再直接使用
 </script>

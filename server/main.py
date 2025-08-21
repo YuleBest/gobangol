@@ -3,6 +3,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import aiosqlite
 import uuid
 import random
@@ -14,6 +16,7 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(m
 logger = logging.getLogger("room-server")
 
 rooms_cache = {}  # roomId -> {players, spectators, messages, sockets, joinTokens, lastActivityTime}
+token_cache = {}  # token -> {roomId, user, type, used, createdAt}  type: 'creator' or 'joiner'
 ROOM_TIMEOUT_SECONDS = 120  # 2分钟无活动自动销毁房间
 
 async def init_db():
@@ -80,6 +83,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# 配置CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许所有来源，生产环境应该配置具体域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 def validate_nickname(nickname):
     if not nickname:
         return False
@@ -105,6 +117,55 @@ def cleanup_expired_tokens(room, expire_seconds=60):
                         if info["used"] or now - info["createdAt"] > expire_seconds]
     for t in tokens_to_delete:
         del room["joinTokens"][t]
+
+def create_token(room_id, user, token_type):
+    """创建一次性Token"""
+    token = generate_token()
+    token_cache[token] = {
+        "roomId": room_id,
+        "user": user,
+        "type": token_type,  # 'creator' or 'joiner'
+        "used": False,
+        "createdAt": datetime.utcnow().timestamp()
+    }
+    return token
+
+def validate_token(token):
+    """验证Token有效性，使用后立即失效"""
+    token_info = token_cache.get(token)
+    if not token_info or token_info["used"]:
+        return None
+    
+    # 标记Token为已使用
+    token_info["used"] = True
+    
+    # 检查房间是否存在
+    room = rooms_cache.get(token_info["roomId"])
+    if not room:
+        return None
+    
+    return token_info
+
+def get_room_info_by_token(token):
+    """通过Token获取房间信息"""
+    token_info = validate_token(token)
+    if not token_info:
+        return None
+    
+    room = rooms_cache.get(token_info["roomId"])
+    if not room:
+        return None
+    
+    return {
+        "roomId": room["id"],
+        "creator": room["creator"],
+        "user": token_info["user"],  # 当前用户的昵称
+        "userType": token_info["type"],  # 'creator' or 'joiner'
+        "players": room["players"],
+        "spectators": room["spectators"],
+        "roomStatus": room["roomStatus"],
+        "messages": room["messages"]
+    }
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
@@ -155,17 +216,16 @@ async def websocket_endpoint(ws: WebSocket):
                     "joinTokens": {},
                     "lastActivityTime": datetime.utcnow().timestamp()
                 }
-                # 生成 joinToken
-                token = generate_token()
-                room["joinTokens"][token] = {"user": creator_name, "used": False, "createdAt": datetime.utcnow().timestamp()}
+                # 生成创建者Token
+                token = create_token(roomId, creator_name, "creator")
                 rooms_cache[roomId] = room
                 user_room = roomId
                 room["lastActivityTime"] = datetime.utcnow().timestamp()
-                await ws.send_text(json.dumps({"action": "roomCreated", "payload": {"id": roomId, "joinToken": token, **room_for_frontend(room)}}))
+                await ws.send_text(json.dumps({"action": "roomCreated", "payload": {"token": token}}))
                 logger.info("[WS] 创建房间: %s by %s", roomId, creator_name)
 
-            # ---------------- 请求临时 token ----------------
-            elif action == "requestToken":
+            # ---------------- 请求加入房间Token ----------------
+            elif action == "requestJoinToken":
                 roomId = payload.get("roomId")
                 user = payload.get("user")
                 room = rooms_cache.get(roomId)
@@ -175,49 +235,66 @@ async def websocket_endpoint(ws: WebSocket):
                 if user in room["players"] or user in room["spectators"]:
                     await ws.send_text(json.dumps({"action": "error", "payload": "你已在房间中"}))
                     continue
-                cleanup_expired_tokens(room)
-                token = generate_token()
-                room["joinTokens"][token] = {"user": user, "used": False, "createdAt": datetime.utcnow().timestamp()}
-                await ws.send_text(json.dumps({"action": "roomCreated", "payload": {"id": roomId, "joinToken": token}}))
-
-            # ---------------- 加入房间 ----------------
-            elif action == "joinRoom":
-                roomId = payload.get("roomId")
-                user = payload.get("user")
+                
+                # 检查房间密码
                 password = payload.get("password", "")
-                token = payload.get("joinToken", "")
+                if room["password"] and room["password"] != password:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "密码错误"}))
+                    continue
+                
+                # 生成加入者Token
+                token = create_token(roomId, user, "joiner")
+                await ws.send_text(json.dumps({"action": "joinToken", "payload": {"token": token}}))
+
+            # ---------------- 通过Token加入房间 ----------------
+            elif action == "joinRoom":
+                token = payload.get("token", "")
+                if not token:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "缺少Token"}))
+                    continue
+                
+                # 验证Token
+                token_info = validate_token(token)
+                if not token_info:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "Token无效或已使用"}))
+                    continue
+                
+                roomId = token_info["roomId"]
+                user = token_info["user"]
                 room = rooms_cache.get(roomId)
                 if not room:
                     await ws.send_text(json.dumps({"action": "error", "payload": "房间不存在"}))
                     continue
-                if room["password"] and room["password"] != password:
-                    await ws.send_text(json.dumps({"action": "error", "payload": "密码错误"}))
-                    continue
-                cleanup_expired_tokens(room)
-                token_info = room.get("joinTokens", {}).get(token)
-                if not token_info or token_info["used"] or token_info["user"] != user:
-                    await ws.send_text(json.dumps({"action": "error", "payload": "token无效或已使用"}))
-                    continue
-                token_info["used"] = True  # 标记已使用
+                
+                # 添加用户到房间
                 if user not in room["players"] and user not in room["spectators"]:
                     if len(room["players"]) < 2:
                         room["players"].append(user)
                         if len(room["players"]) == 2:
-                            room["roomStatus"] = "spectating"
+                            room["roomStatus"] = "playing"
                     elif len(room["players"]) + len(room["spectators"]) < 12:
                         room["spectators"].append(user)
-                        room["roomStatus"] = "spectating"
+                        room["roomStatus"] = "playing"
                     else:
                         await ws.send_text(json.dumps({"action": "error", "payload": "房间已满"}))
                         continue
+                
                 room["sockets"].add(ws)
                 user_room = roomId
-                room["lastActivityTime"] = datetime.utcnow().timestamp()  # 更新最后活动时间
-                await ws.send_text(json.dumps({"action": "joinedRoom", "payload": room_for_frontend(room)}))
+                current_user = user  # 设置当前用户
+                room["lastActivityTime"] = datetime.utcnow().timestamp()
+                
+                # 发送包含历史消息的完整房间信息
+                room_data = room_for_frontend(room)
+                room_data["messages"] = room["messages"]
+                await ws.send_text(json.dumps({"action": "joinedRoom", "payload": room_data}))
+                
+                # 通知其他用户房间更新
                 update = {"players": room["players"], "spectators": room["spectators"], "roomStatus": room["roomStatus"]}
                 for s in room["sockets"]:
                     if s != ws:
                         await s.send_text(json.dumps({"action": "roomUpdate", "payload": update}))
+                        await s.send_text(json.dumps({"action": "userJoined", "payload": {"user": user, "message": f"用户 {user} 加入了房间"}}))
                 logger.info("[WS] 用户 %s 加入房间 %s", user, roomId)
 
             # ---------------- 离开房间 ----------------
@@ -242,15 +319,43 @@ async def websocket_endpoint(ws: WebSocket):
                 roomId = payload.get("roomId")
                 room = rooms_cache.get(roomId)
                 if room:
-                    room["messages"].append(payload)
+                    # 确保消息包含用户名
+                    player_name = payload.get("playerName", current_user or "未知用户")
+                    message_data = {
+                        "playerName": player_name,
+                        "message": payload.get("message", ""),
+                        "roomId": roomId,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    room["messages"].append(message_data)
                     room["lastActivityTime"] = datetime.utcnow().timestamp()  # 更新最后活动时间
+                    
+                    # 向房间内所有用户广播消息
                     for s in room["sockets"]:
-                        await s.send_text(json.dumps({"action": "newMessage", "payload": payload}))
+                        try:
+                            await s.send_text(json.dumps({"action": "newMessage", "payload": message_data}))
+                        except Exception as e:
+                            logger.error("[WS] 发送消息失败: %s", str(e))
+                            room["sockets"].discard(s)
 
             # ---------------- 房间列表 ----------------
             elif action == "getRoomList":
                 list_payload = [room_for_frontend(r) for r in rooms_cache.values()]
                 await ws.send_text(json.dumps({"action": "roomList", "payload": list_payload}))
+
+            # ---------------- 通过Token获取房间信息 ----------------
+            elif action == "getRoomByToken":
+                token = payload.get("token", "")
+                if not token:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "缺少Token"}))
+                    continue
+                
+                room_info = get_room_info_by_token(token)
+                if not room_info:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "Token无效或已使用"}))
+                    continue
+                
+                await ws.send_text(json.dumps({"action": "roomInfo", "payload": room_info}))
 
             # ---------------- 销毁房间 ----------------
             elif action == "destroyRoom":
@@ -310,6 +415,17 @@ async def websocket_endpoint(ws: WebSocket):
             if room:
                 room["sockets"].discard(ws)
 
+@app.get("/getRoomByToken")
+async def get_room_by_token(token: str):
+    """通过Token获取房间信息的HTTP接口"""
+    room_info = get_room_info_by_token(token)
+    if not room_info:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Token无效或已使用"}
+        )
+    return JSONResponse(content=room_info)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=3000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)
