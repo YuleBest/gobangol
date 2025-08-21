@@ -33,6 +33,8 @@ dist/
 wheels/
 .venv/
 .env
+*.db
+db.sqlite
 
 # Optional: test cache / logs
 .pytest_cache/

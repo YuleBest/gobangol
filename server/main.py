@@ -136,9 +136,6 @@ def validate_token(token):
     if not token_info or token_info["used"]:
         return None
     
-    # 标记Token为已使用
-    token_info["used"] = True
-    
     # 检查房间是否存在
     room = rooms_cache.get(token_info["roomId"])
     if not room:
@@ -148,8 +145,8 @@ def validate_token(token):
 
 def get_room_info_by_token(token):
     """通过Token获取房间信息"""
-    token_info = validate_token(token)
-    if not token_info:
+    token_info = token_cache.get(token)
+    if not token_info or token_info["used"]:
         return None
     
     room = rooms_cache.get(token_info["roomId"])
@@ -259,6 +256,9 @@ async def websocket_endpoint(ws: WebSocket):
                     await ws.send_text(json.dumps({"action": "error", "payload": "Token无效或已使用"}))
                     continue
                 
+                # 标记Token为已使用（真正使用时才标记）
+                token_cache[token]["used"] = True
+                
                 roomId = token_info["roomId"]
                 user = token_info["user"]
                 room = rooms_cache.get(roomId)
@@ -331,17 +331,34 @@ async def websocket_endpoint(ws: WebSocket):
                     room["lastActivityTime"] = datetime.utcnow().timestamp()  # 更新最后活动时间
                     
                     # 向房间内所有用户广播消息
+                    disconnected_sockets = set()
                     for s in room["sockets"]:
                         try:
                             await s.send_text(json.dumps({"action": "newMessage", "payload": message_data}))
+                            logger.debug("[WS] 消息已发送给用户: %s", id(s))
                         except Exception as e:
                             logger.error("[WS] 发送消息失败: %s", str(e))
-                            room["sockets"].discard(s)
+                            disconnected_sockets.add(s)
+                    
+                    # 清理断开的连接
+                    for s in disconnected_sockets:
+                        room["sockets"].discard(s)
 
             # ---------------- 房间列表 ----------------
             elif action == "getRoomList":
                 list_payload = [room_for_frontend(r) for r in rooms_cache.values()]
                 await ws.send_text(json.dumps({"action": "roomList", "payload": list_payload}))
+
+            # ---------------- 获取房间信息 ----------------
+            elif action == "getRoomInfo":
+                roomId = payload.get("roomId")
+                room = rooms_cache.get(roomId)
+                if room and roomId in rooms_cache:
+                    room_data = room_for_frontend(room)
+                    room_data["messages"] = room["messages"]
+                    await ws.send_text(json.dumps({"action": "roomInfo", "payload": room_data}))
+                else:
+                    await ws.send_text(json.dumps({"action": "error", "payload": "房间不存在"}))
 
             # ---------------- 通过Token获取房间信息 ----------------
             elif action == "getRoomByToken":

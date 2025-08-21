@@ -82,35 +82,29 @@
   </div>
 </template>
 
+/* 这是组件内样式块，保留 scoped */
 <style lang="scss" scoped>
-#app {
-  height: 100%;
-  width: 100%;
-}
-
+/* === 布局：Header / Scroll / Footer 三段式 === */
 .main {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin: 20px;
-  height: calc(100% - 20px);
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* 头-中-尾 */
+  height: 100dvh; /* 视口高度：移动端更稳 */
+  box-sizing: border-box;
+  padding: 20px;
+  gap: 10px; /* 用 gap 代替子元素外边距，避免撑高 */
 }
 
+/* 顶部标题固定 */
 .title {
-  width: 100%;
+  min-height: 60px; /* 固定高度 */
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  // margin-bottom: 10px;
-  height: 60px;
+  justify-content: space-between;
+  width: 100%;
 
   .leave-and-info {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: center;
     gap: 10px;
   }
 
@@ -125,8 +119,6 @@
 
   .roomId {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
     align-items: center;
     background-color: rgba(138, 138, 138, 0.1);
     padding: 7px;
@@ -136,7 +128,7 @@
       margin-right: 7px;
       margin-left: 4px;
       font-size: 12px;
-      background-color: #00000000;
+      background-color: transparent;
     }
 
     code {
@@ -148,19 +140,24 @@
   }
 }
 
+/* 中间聊天区：只在这里滚动 */
 .chat {
-  width: 100%;
+  min-height: 0; /* 关键：允许在 grid/flex 中收缩 */
   display: flex;
   flex-direction: column;
-  flex: 1;
+  overflow: hidden; /* 自己不滚，内部滚 */
+  width: 100%;
 
   .v-divider {
     margin: 10px 0;
+    flex-shrink: 0;
   }
 
   .chat-messages {
     flex: 1;
+    min-height: 0; /* 关键：让内部真正可滚 */
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 10px 0;
   }
 
@@ -207,8 +204,8 @@
 
   .my-message {
     .message-bubble {
-      background-color: #e3f2fd;
-      border: 1px solid #bbdefb;
+      background-color: pink;
+      border: 2px solid #a7a7a7;
     }
 
     .message-sender {
@@ -228,14 +225,17 @@
   }
 }
 
+/* 底部输入栏固定 */
 .chat-input {
-  width: 100%;
-  margin-bottom: 20px;
+  min-height: 60px; /* 固定高度 */
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
+  width: 100%;
+
+  /* 避免额外外边距把页面撑高，靠 .main 的 gap 控间距 */
+  margin: 0;
 
   .v-input-field {
     align-self: center;
@@ -360,6 +360,8 @@ const fetchRoomInfo = async () => {
 // ---------------- WS 消息处理 ----------------
 function handleWSMessage(msg: any) {
   const { action, payload } = msg;
+  console.log("收到WebSocket消息:", action, payload);
+
   switch (action) {
     case "joinedRoom":
     case "roomCreated":
@@ -373,7 +375,7 @@ function handleWSMessage(msg: any) {
         messages.value = (payload.messages || []).map((m: any) => ({
           playerName: m.playerName || m.sender || "未知用户",
           message: m.message || m.content || "",
-          timestamp: new Date(),
+          timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
         }));
         scrollToBottom();
       }
@@ -390,21 +392,35 @@ function handleWSMessage(msg: any) {
       messages.value = (payload.messages || []).map((m: any) => ({
         playerName: m.playerName || m.sender || "未知用户",
         message: m.message || m.content || "",
-        timestamp: new Date(),
+        timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
       }));
       scrollToBottom();
       refreshing.value = false;
       break;
     case "newMessage":
       console.log("收到新消息:", payload);
-      // 确保消息是针对当前房间的
-      if (payload.roomId === roomId.value) {
-        messages.value.push({
-          playerName: payload.playerName || payload.sender || "未知用户",
-          message: payload.message || payload.content || "",
-          timestamp: new Date(),
-        });
-        scrollToBottom();
+      // 确保消息是针对当前房间的 - 放宽检查条件
+      if (payload.roomId === roomId.value || !payload.roomId) {
+        const existingMessage = messages.value.find(
+          (m) =>
+            m.playerName === (payload.playerName || payload.sender) &&
+            m.message === (payload.message || payload.content) &&
+            Math.abs(
+              new Date(m.timestamp || Date.now()).getTime() -
+                new Date(payload.timestamp || Date.now()).getTime()
+            ) < 1000
+        );
+
+        if (!existingMessage) {
+          messages.value.push({
+            playerName: payload.playerName || payload.sender || "未知用户",
+            message: payload.message || payload.content || "",
+            timestamp: payload.timestamp
+              ? new Date(payload.timestamp)
+              : new Date(),
+          });
+          scrollToBottom();
+        }
       }
       break;
     case "roomClosed":
@@ -476,10 +492,12 @@ onMounted(async () => {
   if (!roomInfoLoaded) return;
 
   // 添加消息监听器
-  ws.value?.addEventListener("message", (event) => {
+  const messageHandler = (event: MessageEvent) => {
     const msg = JSON.parse(event.data);
     handleWSMessage(msg);
-  });
+  };
+  (ws.value as any)._messageHandler = messageHandler;
+  ws.value?.addEventListener("message", messageHandler);
 
   // 通过Token加入房间
   ws.value?.send(
@@ -488,6 +506,16 @@ onMounted(async () => {
       payload: { token: token.value },
     })
   );
+
+  // 立即获取房间信息以确保消息同步
+  setTimeout(() => {
+    ws.value?.send(
+      JSON.stringify({
+        action: "getRoomInfo",
+        payload: { roomId: roomId.value },
+      })
+    );
+  }, 100);
 
   roomListInterval = window.setInterval(() => {
     ws.value?.send(
@@ -503,5 +531,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (roomListInterval) clearInterval(roomListInterval);
+  if (ws.value && (ws.value as any)._messageHandler) {
+    ws.value.removeEventListener("message", (ws.value as any)._messageHandler);
+  }
 });
 </script>
